@@ -836,19 +836,20 @@ Trường: ${userInfo.school}
 CSVC: ${userInfo.facilities}
 Công nghệ/AI: ${userInfo.applyAI}
 
-━━━━ YÊU CẦU CHI TIẾT (NGƯỜI ĐỌC PHẢI ÁP DỤNG ĐƯỢC NGAY) ━━━━
+━━━━ ĐI THẲNG VÀO QUY TRÌNH THỰC HIỆN TỪNG GIẢI PHÁP ━━━━
+⚠️ KHÔNG VIẾT: Mục tiêu giải pháp, Cơ sở khoa học, Điều kiện thực hiện, Lưu ý chung
+⚠️ CHỈ VIẾT: Cách thực hiện cụ thể từng bước
 
-📌 GIAI ĐOẠN 1: CHUẨN BỊ
-- Xây dựng kế hoạch, chuẩn bị cơ sở vật chất, nhân sự, tài liệu/phần mềm cần thiết
+📌 GIẢI PHÁP 1: [Tên giải pháp - đặt tên ấn tượng, sáng tạo]
+  • Bước 1: [Tên bước] → Cách thực hiện chi tiết
+  • Bước 2: [Tên bước] → Cách thực hiện chi tiết
+  • Ví dụ minh họa CỤ THỂ (giáo án mẫu, tình huống, bài tập mẫu...)
 
-📌 GIAI ĐOẠN 2: TRIỂN KHAI CÁC GIẢI PHÁP CỤ THỂ
-Chia thành Giải pháp 1, Giải pháp 2, Giải pháp 3... Mỗi giải pháp NÊU RÕ:
-  • Mục tiêu của giải pháp đó
-  • Cách thức tiến hành (Bước 1, Bước 2...)
-  • Ví dụ minh họa CỤ THỂ (giáo án mẫu, tình huống sư phạm, bài tập mẫu...)
+📌 GIẢI PHÁP 2: [Tên giải pháp]
+  • Bước 1 → Bước 2 → Ví dụ cụ thể
 
-📌 GIAI ĐOẠN 3: KIỂM TRA, ĐÁNH GIÁ
-- Cách theo dõi tiến độ và điều chỉnh giải pháp trong quá trình thực hiện
+📌 GIẢI PHÁP 3: [Tên giải pháp]
+  • Bước 1 → Bước 2 → Ví dụ cụ thể
 
 🖼️ GỢI Ý HÌNH ẢNH MINH HỌA (BẮT BUỘC):
 Gợi ý 2-3 vị trí nên đặt hình ảnh minh họa:
