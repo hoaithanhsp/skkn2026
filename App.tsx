@@ -616,13 +616,22 @@ Kết thúc phần dàn ý, hiển thị hộp thoại:
 `;
 
       let generatedText = "";
+      let pendingChunks_sg = '';
+      let lastFlush_sg = Date.now();
+      const FLUSH_SG = 150;
       await sendMessageStream(initMessage, (chunk) => {
         generatedText += chunk;
-        setState(prev => ({
-          ...prev,
-          fullDocument: generatedText
-        }));
+        pendingChunks_sg += chunk;
+        const now = Date.now();
+        if (now - lastFlush_sg >= FLUSH_SG) {
+          lastFlush_sg = now;
+          const text = generatedText; // capture current full text
+          pendingChunks_sg = '';
+          setState(prev => ({ ...prev, fullDocument: text }));
+        }
       });
+      // Flush cuối
+      setState(prev => ({ ...prev, fullDocument: generatedText }));
 
       setState(prev => ({ ...prev, isStreaming: false }));
 
@@ -667,13 +676,22 @@ Kết thúc phần dàn ý, hiển thị hộp thoại:
 `;
 
       let generatedText = "";
+      let pendingChunks_ro = '';
+      let lastFlush_ro = Date.now();
+      const FLUSH_RO = 150;
       await sendMessageStream(feedbackMessage, (chunk) => {
         generatedText += chunk;
-        setState(prev => ({
-          ...prev,
-          fullDocument: generatedText
-        }));
+        pendingChunks_ro += chunk;
+        const now = Date.now();
+        if (now - lastFlush_ro >= FLUSH_RO) {
+          lastFlush_ro = now;
+          const text = generatedText;
+          pendingChunks_ro = '';
+          setState(prev => ({ ...prev, fullDocument: text }));
+        }
       });
+      // Flush cuối
+      setState(prev => ({ ...prev, fullDocument: generatedText }));
 
       setState(prev => ({ ...prev, isStreaming: false }));
       setOutlineFeedback("");
@@ -957,15 +975,36 @@ Chúc mừng bạn đã hoàn thành bản mô tả sáng kiến!`,
 
     try {
       let sectionText = "\n\n---\n\n";
+      // Throttle: Batch nhiều chunk lại, chỉ update UI mỗi 150ms để tránh đơ
+      let pendingChunks = '';
+      let lastFlush = Date.now();
+      const FLUSH_INTERVAL = 150; // ms
+
+      const flushPending = () => {
+        if (pendingChunks && shouldAppend) {
+          const toFlush = pendingChunks;
+          pendingChunks = '';
+          setState(prev => ({
+            ...prev,
+            fullDocument: prev.fullDocument + toFlush
+          }));
+        }
+      };
+
       await sendMessageStream(currentStepPrompt, (chunk) => {
         sectionText += chunk;
         if (shouldAppend) {
-          setState(prev => ({
-            ...prev,
-            fullDocument: prev.fullDocument + chunk
-          }));
+          pendingChunks += chunk;
+          const now = Date.now();
+          if (now - lastFlush >= FLUSH_INTERVAL) {
+            lastFlush = now;
+            flushPending();
+          }
         }
       });
+
+      // Flush phần còn lại sau khi stream kết thúc
+      flushPending();
 
       setState(prev => ({ ...prev, isStreaming: false }));
 
