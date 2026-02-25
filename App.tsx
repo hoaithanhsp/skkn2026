@@ -1505,6 +1505,7 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
               content={state.fullDocument}
               onUpdate={handleDocumentUpdate}
               isEditable={state.step === GenerationStep.OUTLINE && !state.isStreaming}
+              isStreaming={state.isStreaming}
             />
 
             {/* Mobile Controls Floating */}
