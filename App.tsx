@@ -838,18 +838,31 @@ Công nghệ/AI: ${userInfo.applyAI}
 
 ━━━━ ĐI THẲNG VÀO QUY TRÌNH THỰC HIỆN TỪNG GIẢI PHÁP ━━━━
 ⚠️ KHÔNG VIẾT: Mục tiêu giải pháp, Cơ sở khoa học, Điều kiện thực hiện, Lưu ý chung
-⚠️ CHỈ VIẾT: Cách thực hiện cụ thể từng bước
+⚠️ CHỈ VIẾT: Cách thực hiện cụ thể từng bước — NỔI BẬT, CHI TIẾT, THỰC TẾ
 
-📌 GIẢI PHÁP 1: [Tên giải pháp - đặt tên ấn tượng, sáng tạo]
-  • Bước 1: [Tên bước] → Cách thực hiện chi tiết
-  • Bước 2: [Tên bước] → Cách thực hiện chi tiết
-  • Ví dụ minh họa CỤ THỂ (giáo án mẫu, tình huống, bài tập mẫu...)
+📌 QUY TẮC QUAN TRỌNG:
+- TỐI ĐA 3 GIẢI PHÁP (có thể 2 nếu mỗi giải pháp cần viết sâu)
+- Linh hoạt số giải pháp để ĐẢM BẢO tổng phần này đạt 3-5 trang
+- Nếu đề tài đơn giản → 2 giải pháp, mỗi GP viết KỸ hơn
+- Nếu đề tài phong phú → 3 giải pháp, mỗi GP viết vừa đủ
 
-📌 GIẢI PHÁP 2: [Tên giải pháp]
-  • Bước 1 → Bước 2 → Ví dụ cụ thể
+📌 CẤU TRÚC MỖI GIẢI PHÁP (KHAI THÁC TỐI ĐA):
+  🔹 Tên giải pháp: Đặt tên ẤN TƯỢNG, SÁNG TẠO (không chung chung)
+  🔹 Các bước thực hiện: Viết CHI TIẾT từng bước
+     - Mô tả CỤ THỂ cách làm (ai làm gì, ở đâu, khi nào, bằng công cụ gì)
+     - Ví dụ minh họa THỰC TẾ (giáo án mẫu, tình huống cụ thể, bài tập mẫu)
+     - Kết quả đạt được sau mỗi bước
+  🔹 Điểm NỔI BẬT của giải pháp: 1-2 câu khẳng định tính ưu việt
 
-📌 GIẢI PHÁP 3: [Tên giải pháp]
-  • Bước 1 → Bước 2 → Ví dụ cụ thể
+💡 VÍ DỤ CẤU TRÚC:
+### Giải pháp 1: [Tên sáng tạo]
+**Bước 1: [Tên bước]**
+Cách thực hiện chi tiết... Ví dụ cụ thể...
+**Bước 2: [Tên bước]**
+Cách thực hiện chi tiết... Ví dụ cụ thể...
+
+### Giải pháp 2: [Tên sáng tạo]
+...
 
 🖼️ GỢI Ý HÌNH ẢNH MINH HỌA (BẮT BUỘC):
 Gợi ý 2-3 vị trí nên đặt hình ảnh minh họa:

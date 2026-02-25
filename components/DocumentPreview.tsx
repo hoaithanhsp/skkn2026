@@ -5,6 +5,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Edit, Save, X, FileText } from 'lucide-react';
 import { Button } from './Button';
+import { fixVietnameseCapitalization } from '../services/textProcessor';
 
 /**
  * Lightweight: Chỉ hiển thị phần cuối document khi đang streaming
@@ -31,28 +32,73 @@ function StreamingPreview({ content }: { content: string }) {
             ⬆️ Nội dung phía trên ({Math.round((content.length - TAIL_SIZE) / 1000)}k ký tự) sẽ hiển thị đầy đủ sau khi viết xong
           </div>
         )}
-        {/* Render plain text với basic formatting - CỰC NHẸ */}
+        {/* Render plain text với basic formatting + bảng kẻ trực quan */}
         <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">
-          {visibleContent.split('\n').map((line, i) => {
-            const trimmed = line.trim();
-            // Headings
-            if (trimmed.startsWith('### ')) return <h3 key={i} className="font-bold text-lg mt-4 mb-2">{trimmed.slice(4)}</h3>;
-            if (trimmed.startsWith('## ')) return <h2 key={i} className="font-bold text-xl mt-5 mb-2">{trimmed.slice(3)}</h2>;
-            if (trimmed.startsWith('# ')) return <h1 key={i} className="font-bold text-2xl mt-6 mb-3">{trimmed.slice(2)}</h1>;
-            // Table rows
-            if (trimmed.startsWith('|')) return <div key={i} className="font-mono text-sm bg-gray-50 px-2">{trimmed}</div>;
-            // Separator
-            if (trimmed === '---' || trimmed === '***') return <hr key={i} className="my-4" />;
-            // Bold markers
-            if (trimmed.startsWith('**') && trimmed.endsWith('**')) return <p key={i} className="font-bold my-1">{trimmed.slice(2, -2)}</p>;
-            // List items
-            if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) return <p key={i} className="ml-4 my-0.5">• {trimmed.slice(2)}</p>;
-            if (/^\d+\.\s/.test(trimmed)) return <p key={i} className="ml-4 my-0.5">{trimmed}</p>;
-            // Empty line
-            if (!trimmed) return <div key={i} className="h-2" />;
-            // Normal text
-            return <p key={i} className="my-0.5">{trimmed}</p>;
-          })}
+          {(() => {
+            const lines = visibleContent.split('\n');
+            const elements: React.ReactNode[] = [];
+            let i = 0;
+
+            while (i < lines.length) {
+              const trimmed = lines[i].trim();
+
+              // Nhóm các dòng bảng liên tiếp → render HTML table
+              if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+                const tableRows: string[][] = [];
+                let hasSeparator = false;
+                while (i < lines.length && lines[i].trim().startsWith('|')) {
+                  const row = lines[i].trim();
+                  // Bỏ dòng separator (|---|---|)
+                  if (/^\|[\s\-:]+\|/.test(row) && row.replace(/[\s|\-:]/g, '').length === 0) {
+                    hasSeparator = true;
+                    i++;
+                    continue;
+                  }
+                  const cells = row.split('|').map(c => c.trim()).filter(c => c);
+                  if (cells.length > 0) tableRows.push(cells);
+                  i++;
+                }
+                if (tableRows.length > 0) {
+                  elements.push(
+                    <div key={`table-${i}`} className="my-3 overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-400 text-sm">
+                        {tableRows.map((row, ri) => (
+                          <tr key={ri} className={ri === 0 ? 'bg-sky-100 font-semibold' : ri % 2 === 0 ? 'bg-gray-50' : ''}>
+                            {row.map((cell, ci) => (
+                              ri === 0 ? (
+                                <th key={ci} className="border border-gray-400 px-3 py-2 text-left">{cell}</th>
+                              ) : (
+                                <td key={ci} className="border border-gray-400 px-3 py-2">{cell}</td>
+                              )
+                            ))}
+                          </tr>
+                        ))}
+                      </table>
+                    </div>
+                  );
+                }
+                continue;
+              }
+
+              // Headings
+              if (trimmed.startsWith('### ')) { elements.push(<h3 key={i} className="font-bold text-lg mt-4 mb-2">{trimmed.slice(4)}</h3>); i++; continue; }
+              if (trimmed.startsWith('## ')) { elements.push(<h2 key={i} className="font-bold text-xl mt-5 mb-2">{trimmed.slice(3)}</h2>); i++; continue; }
+              if (trimmed.startsWith('# ')) { elements.push(<h1 key={i} className="font-bold text-2xl mt-6 mb-3">{trimmed.slice(2)}</h1>); i++; continue; }
+              // Separator
+              if (trimmed === '---' || trimmed === '***') { elements.push(<hr key={i} className="my-4" />); i++; continue; }
+              // Bold markers
+              if (trimmed.startsWith('**') && trimmed.endsWith('**')) { elements.push(<p key={i} className="font-bold my-1">{trimmed.slice(2, -2)}</p>); i++; continue; }
+              // List items
+              if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) { elements.push(<p key={i} className="ml-4 my-0.5">• {trimmed.slice(2)}</p>); i++; continue; }
+              if (/^\d+\.\s/.test(trimmed)) { elements.push(<p key={i} className="ml-4 my-0.5">{trimmed}</p>); i++; continue; }
+              // Empty line
+              if (!trimmed) { elements.push(<div key={i} className="h-2" />); i++; continue; }
+              // Normal text
+              elements.push(<p key={i} className="my-0.5">{trimmed}</p>);
+              i++;
+            }
+            return elements;
+          })()}
         </div>
         <div className="flex items-center gap-2 mt-4 text-green-600 animate-pulse">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" />
@@ -178,10 +224,10 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
     }
   };
 
-  // Chỉ format khi KHÔNG streaming (tránh regex nặng mỗi chunk)
+  // Chỉ format + chuẩn hóa viết hoa khi KHÔNG streaming (tránh tính toán nặng mỗi chunk)
   const formattedContent = useMemo(() => {
-    if (isStreaming) return content; // Skip formatting khi streaming
-    return formatContent(content);
+    if (isStreaming) return content;
+    return fixVietnameseCapitalization(formatContent(content));
   }, [content, isStreaming]);
 
   return (

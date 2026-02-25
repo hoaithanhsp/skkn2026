@@ -3,6 +3,8 @@
  * Chuyển đổi Markdown sang file .docx theo đúng mẫu BẢN MÔ TẢ SÁNG KIẾN
  */
 
+import { fixVietnameseCapitalization } from './textProcessor';
+
 import {
   Document,
   Packer,
@@ -500,7 +502,9 @@ function buildSignatureBlock(userInfo: ExportUserInfo): Paragraph[] {
  */
 export async function exportSKKNToDocx(markdown: string, userInfo: ExportUserInfo, filename: string): Promise<void> {
   // Lọc bỏ Phần I từ markdown (đã tự động tạo từ userInfo)
-  const cleanedMarkdown = markdown.replace(/#+\s*(I\.\s*THÔNG TIN CHUNG|PHẦN\s*I|I\.\s*Thông tin chung)[\s\S]*?(?=##?\s*(II\.|PHẦN\s*II|II\.\s*Mô tả))/i, '');
+  let cleanedMarkdown = markdown.replace(/#+\s*(I\.\s*THÔNG TIN CHUNG|PHẦN\s*I|I\.\s*Thông tin chung)[\s\S]*?(?=##?\s*(II\.|PHẦN\s*II|II\.\s*Mô tả))/i, '');
+  // Chuẩn hóa viết hoa/thường tiếng Việt
+  cleanedMarkdown = fixVietnameseCapitalization(cleanedMarkdown);
 
   const elements = parseMarkdown(cleanedMarkdown);
   const numberingConfig: any[] = [];
