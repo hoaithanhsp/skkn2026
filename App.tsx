@@ -723,10 +723,28 @@ Phần I (Thông tin chung) đã được tự động điền.
 
 NHIỆM VỤ TIẾP THEO:
 Hãy viết chi tiết PHẦN II: MÔ TẢ GIẢI PHÁP ĐÃ BIẾT (1,5-2,5 trang).
-- Mô tả thực trạng giải pháp đã biết và đang triển khai tại Việt Nam, tại địa phương ${userInfo.location} và tại đơn vị ${userInfo.applicationUnit || userInfo.school}
-- Nêu ưu điểm của giải pháp đã biết
-- Đặc biệt nêu rõ tồn tại, bất cập, nhược điểm
-- Từ đó đưa ra giải pháp đề nghị công nhận sáng kiến
+
+━━━━ CẤU TRÚC HÌNH PHỄU (VĨ MÔ → VI MÔ) ━━━━
+
+📌 1. THỰC TRẠNG CHUNG (Việt Nam & ${userInfo.location}):
+- Nêu khái quát các văn bản chỉ đạo, xu hướng giáo dục/quản lý hiện nay liên quan đến đề tài
+- VD: "Tại Việt Nam, việc... đang là ưu tiên hàng đầu... Tại ${userInfo.location}, Sở GD&ĐT đã có những chỉ đạo sát sao về..."
+
+📌 2. THỰC TRẠNG TẠI ĐƠN VỊ ${userInfo.applicationUnit || userInfo.school}:
+- Mô tả chi tiết CÁCH LÀM CŨ mà đơn vị đang áp dụng
+- Số liệu minh chứng: kết quả khảo sát, bảng điểm, bảng kiểm trước khi có sáng kiến (số lẻ tự nhiên)
+- Dùng bảng Markdown chuẩn để trình bày số liệu
+
+📌 3. PHÂN TÍCH ƯU ĐIỂM giải pháp cũ:
+- Thừa nhận mặt tích cực (dễ thực hiện, đã đi vào nề nếp, chi phí thấp...)
+
+📌 4. PHÂN TÍCH NHƯỢC ĐIỂM, BẤT CẬP (TRỌNG TÂM - viết KỸ NHẤT):
+- Tính lạc hậu: Giải pháp cũ không còn phù hợp với chương trình mới/yêu cầu thực tế
+- Tính hiệu quả thấp: Tốn thời gian, công sức nhưng kết quả không cao
+- Sự nhàm chán: Cách làm cũ gây ra sự thụ động cho ${userInfo.researchSubjects || 'học sinh'}
+
+📌 5. CHỐT VẤN ĐỀ:
+- Từ những bất cập trên → khẳng định việc đưa ra "${userInfo.topic}" là CẤP THIẾT để khắc phục triệt để các tồn tại
 
 ⚠️ NHẮC LẠI: Đây là sáng kiến cấp ${userInfo.level}, khối ${userInfo.grade}, môn ${userInfo.subject}.
 Trường: ${userInfo.school}, Địa phương: ${userInfo.location}
@@ -741,9 +759,31 @@ ${getSectionPagePrompt('Phần II (Mô tả giải pháp đã biết)', 'partII'
           // Trường hợp step PART_I (nếu navigate lại)
           prompt: `
 Viết chi tiết PHẦN II: MÔ TẢ GIẢI PHÁP ĐÃ BIẾT (1,5-2,5 trang).
-- Mô tả thực trạng giải pháp đã biết tại Việt Nam, tại ${userInfo.location} và tại ${userInfo.applicationUnit || userInfo.school}
-- Ưu điểm, tồn tại, bất cập, nhược điểm
-- Từ đó đưa ra giải pháp đề nghị công nhận sáng kiến
+
+━━━━ CẤU TRÚC HÌNH PHỄU (VĨ MÔ → VI MÔ) ━━━━
+
+📌 1. THỰC TRẠNG CHUNG (Việt Nam & ${userInfo.location}):
+- Nêu khái quát các văn bản chỉ đạo, xu hướng giáo dục/quản lý hiện nay liên quan đến đề tài
+- VD: "Tại Việt Nam, việc... đang là ưu tiên hàng đầu... Tại ${userInfo.location}, Sở GD&ĐT đã có những chỉ đạo sát sao về..."
+
+📌 2. THỰC TRẠNG TẠI ĐƠN VỊ ${userInfo.applicationUnit || userInfo.school}:
+- Mô tả chi tiết CÁCH LÀM CŨ mà đơn vị đang áp dụng
+- Số liệu minh chứng: kết quả khảo sát, bảng điểm, bảng kiểm trước khi có sáng kiến (dùng số lẻ tự nhiên)
+- Dùng bảng Markdown chuẩn để trình bày số liệu
+
+📌 3. PHÂN TÍCH ƯU ĐIỂM giải pháp cũ:
+- Thừa nhận mặt tích cực (dễ thực hiện, đã đi vào nề nếp, chi phí thấp...)
+
+📌 4. PHÂN TÍCH NHƯỢC ĐIỂM, BẤT CẬP (TRỌNG TÂM - viết KỸ NHẤT):
+- Tính lạc hậu: Giải pháp cũ không còn phù hợp với chương trình mới/yêu cầu thực tế
+- Tính hiệu quả thấp: Tốn thời gian, công sức nhưng kết quả không cao
+- Sự nhàm chán: Cách làm cũ gây ra sự thụ động cho ${userInfo.researchSubjects || 'học sinh'}
+
+📌 5. CHỐT VẤN ĐỀ:
+- Từ những bất cập trên → khẳng định việc đưa ra "${userInfo.topic}" là CẤP THIẾT để khắc phục triệt để các tồn tại
+
+⚠️ BÁM SÁT: Cấp ${userInfo.level}, Khối ${userInfo.grade}, Môn ${userInfo.subject}
+Trường: ${userInfo.school}, Địa phương: ${userInfo.location}
 
 ${getPageLimitPrompt()}
 ${getSectionPagePrompt('Phần II', 'partII')}
@@ -755,20 +795,32 @@ ${getSectionPagePrompt('Phần II', 'partII')}
 ${SECTION_III_1_PROMPT}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 THỰC THI: PHẦN III.1 - NỘI DUNG GIẢI PHÁP
+🚀 THỰC THI: PHẦN III.1 - NỘI DUNG GIẢI PHÁP (3-5 trang)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Thông tin: "${userInfo.topic}"
+Đề tài: "${userInfo.topic}"
 Môn: ${userInfo.subject} - Cấp: ${userInfo.level} - Lớp: ${userInfo.grade}
 Trường: ${userInfo.school}
 CSVC: ${userInfo.facilities}
 Công nghệ/AI: ${userInfo.applyAI}
 
-YÊU CẦU:
-Viết chi tiết PHẦN III.1: NỘI DUNG GIẢI PHÁP ĐỀ NGHỊ CÔNG NHẬN SÁNG KIẾN (3-5 trang).
-- Nêu các bước, các nội dung thực hiện giải pháp
-- Chi tiết, cụ thể, có ví dụ minh họa
-- Viết gọn, súc tích nhưng đầy đủ
+━━━━ YÊU CẦU CHI TIẾT (NGƯỜI ĐỌC PHẢI ÁP DỤNG ĐƯỢC NGAY) ━━━━
+
+📌 GIAI ĐOẠN 1: CHUẨN BỊ
+- Xây dựng kế hoạch, chuẩn bị cơ sở vật chất, nhân sự, tài liệu/phần mềm cần thiết
+
+📌 GIAI ĐOẠN 2: TRIỂN KHAI CÁC GIẢI PHÁP CỤ THỂ
+Chia thành Giải pháp 1, Giải pháp 2, Giải pháp 3... Mỗi giải pháp NÊU RÕ:
+  • Mục tiêu của giải pháp đó
+  • Cách thức tiến hành (Bước 1, Bước 2...)
+  • Ví dụ minh họa CỤ THỂ (giáo án mẫu, tình huống sư phạm, bài tập mẫu...)
+
+📌 GIAI ĐOẠN 3: KIỂM TRA, ĐÁNH GIÁ
+- Cách theo dõi tiến độ và điều chỉnh giải pháp trong quá trình thực hiện
+
+🖼️ GỢI Ý HÌNH ẢNH MINH HỌA (BẮT BUỘC):
+Gợi ý 2-3 vị trí nên đặt hình ảnh minh họa:
+**[🖼️ GỢI Ý HÌNH ẢNH: Mô tả chi tiết - Đặt sau phần nào]**
 
 ${getPageLimitPrompt()}
 ${getSectionPagePrompt('Phần III.1 (Nội dung giải pháp)', 'partIII_1')}
@@ -778,9 +830,21 @@ ${getSectionPagePrompt('Phần III.1 (Nội dung giải pháp)', 'partIII_1')}
         [GenerationStep.PART_III_1]: {
           prompt: `
 Tiếp tục viết PHẦN III.2: TÍNH MỚI, TÍNH SÁNG TẠO (1,5-2 trang).
-- Nêu các nội dung đã cải tiến, sáng tạo
-- Tính ưu việt của giải pháp đề nghị công nhận sáng kiến
-- So sánh với giải pháp đã biết (Phần II) để làm rõ điểm mới
+
+━━━━ MỤC ĐÍCH: THUYẾT PHỤC HỘI ĐỒNG ĐÂY KHÔNG PHẢI SAO CHÉP ━━━━
+
+📌 1. ĐIỂM MỚI - Sáng kiến có gì mà các giải pháp trước đây CHƯA CÓ?
+- Ứng dụng công nghệ mới? Thay đổi quy trình? Cách tiếp cận đối tượng khác biệt?
+- Liệt kê rõ ràng từng điểm mới
+
+📌 2. TÍNH SÁNG TẠO:
+- Cách kết hợp các phương pháp cũ để tạo ra hiệu quả mới
+- Cách giải quyết vấn đề hóc búa bằng ý tưởng độc đáo
+
+📌 3. TÍNH ƯU VIỆT - SO SÁNH TRỰC DIỆN VỚI PHẦN II:
+⚠️ BẮT BUỘC so sánh với NHƯỢC ĐIỂM đã nêu ở Phần II (Mô tả giải pháp đã biết)
+- Sử dụng các cụm từ: "Thay vì... như trước đây, giải pháp mới đã...", "Điểm đột phá của sáng kiến nằm ở chỗ..."
+- Có thể dùng bảng so sánh Markdown: | Tiêu chí | Giải pháp cũ | Giải pháp mới |
 
 Đề tài: "${userInfo.topic}"
 Cấp: ${userInfo.level}, Môn: ${userInfo.subject}
@@ -793,9 +857,19 @@ ${getSectionPagePrompt('Phần III.2 (Tính mới, tính sáng tạo)', 'partIII
         [GenerationStep.PART_III_2]: {
           prompt: `
 Tiếp tục viết PHẦN III.3: PHẠM VI ẢNH HƯỞNG, KHẢ NĂNG ÁP DỤNG CỦA SÁNG KIẾN (1-1,5 trang).
-- Chứng minh, phân tích giải pháp có khả năng áp dụng đối với cơ quan, đơn vị khác
-- Chứng minh sáng kiến có phạm vi ảnh hưởng rộng ở cơ sở (cơ quan, đơn vị, địa phương), thành phố
-- Nêu điều kiện áp dụng
+
+━━━━ CHỨNG MINH SÁNG KIẾN KHÔNG CHỈ CHO RIÊNG MÌNH ━━━━
+
+📌 1. KHẢ NĂNG ÁP DỤNG:
+- Khẳng định giải pháp KHÔNG CHỈ dùng cho lớp mình, trường mình
+- Có thể áp dụng cho các đơn vị có đặc điểm tương đồng (cùng khối lớp, cùng quận/huyện, hoặc toàn tỉnh/thành phố ${userInfo.location})
+- Nêu rõ CÁC ĐIỀU KIỆN CẦN THIẾT để đơn vị khác triển khai thành công (CSVC, nhân lực, kinh phí...)
+
+📌 2. PHẠM VI ẢNH HƯỞNG:
+- Tác động tích cực đến ĐỒNG NGHIỆP: thông qua các buổi chuyên đề, sinh hoạt chuyên môn, trao đổi kinh nghiệm
+- Tác động đến ${userInfo.researchSubjects || 'HỌC SINH'}: thay đổi thái độ, kỹ năng, kết quả học tập
+- Tác động đến CỘNG ĐỒNG/PHỤ HUYNH (nếu có)
+- Nếu đã được báo cáo tại hội nghị cấp quận/thành phố → nêu rõ
 
 Đơn vị: ${userInfo.applicationUnit || userInfo.school}
 Địa phương: ${userInfo.location}
@@ -807,12 +881,29 @@ ${getSectionPagePrompt('Phần III.3 (Phạm vi ảnh hưởng)', 'partIII_3')}
         },
         [GenerationStep.PART_III_3]: {
           prompt: `
-Tiếp tục viết PHẦN III.4: HIỆU QUẢ, LỢI ÍCH THU ĐƯỢC TỪ SÁNG KIẾN.
-- Đánh giá lợi ích thu được hoặc dự kiến thu được
-- So sánh tình trạng TRƯỚC và SAU áp dụng sáng kiến → hiệu quả thế nào?
-- Minh chứng cụ thể: bảng số liệu, tỷ lệ %, kết quả cụ thể
-- Dùng số liệu lẻ (42.3%, 67.8%) thay vì số tròn
-- Có bảng so sánh trước/sau (Markdown table chuẩn)
+Tiếp tục viết PHẦN III.4: HIỆU QUẢ, LỢI ÍCH THU ĐƯỢC TỪ SÁNG KIẾN (khoảng 1 trang + minh chứng).
+
+━━━━ SO SÁNH TRƯỚC & SAU - ĐỊNH LƯỢNG + ĐỊNH TÍNH ━━━━
+
+📌 1. HIỆU QUẢ ĐỊNH LƯỢNG (BẮT BUỘC CÓ BẢNG BIỂU):
+- Bảng so sánh Markdown: | Tiêu chí | Trước khi áp dụng | Sau khi áp dụng | Mức tăng/giảm |
+- Tỷ lệ ${userInfo.researchSubjects || 'học sinh'} khá giỏi tăng bao nhiêu %
+- Điểm số khảo sát, số giờ tiết kiệm, kết quả kiểm tra...
+- ⚠️ DÙNG SỐ LIỆU LẺ TỰ NHIÊN: 31/45 em (68,9%) thay vì 70%, 23/45 em (51,1%) thay vì 50%
+- Có thể thêm biểu đồ mô tả bằng text nếu phù hợp
+
+📌 2. HIỆU QUẢ ĐỊNH TÍNH:
+- Sự thay đổi về nhận thức, thái độ, không khí học tập/làm việc
+- Sự hứng thú của ${userInfo.researchSubjects || 'học sinh'}
+- Sự hài lòng của phụ huynh hoặc cấp trên
+
+📌 3. LỢI ÍCH KINH TẾ - XÃ HỘI (nếu có):
+- Tiết kiệm chi phí ngân sách
+- Giá trị tinh thần tốt đẹp cho cộng đồng giáo dục
+
+📌 4. MINH CHỨNG:
+- Nhắc đến các phụ lục đính kèm: hình ảnh, video, sản phẩm của ${userInfo.researchSubjects || 'học sinh'}, phiếu nhận xét của đồng nghiệp
+- Ghi chú: "(Xem Phụ lục 1, 2, 3...)"
 
 Đề tài: "${userInfo.topic}"
 Đối tượng: ${userInfo.researchSubjects || 'Học sinh tại đơn vị'}
@@ -954,7 +1045,7 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
         <div className="mb-8">
           <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center gap-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
             <Wand2 className="h-6 w-6 text-blue-500" />
-            SKKN PRO
+            SKKN PRO 2026
           </h1>
           <p className="text-xs text-blue-800 font-medium mt-1.5 tracking-wide">✨ Trợ lý viết Sáng kiến thông minh</p>
         </div>
@@ -1218,7 +1309,7 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
         {/* Mobile Header */}
         <div className="lg:hidden mb-4 bg-gradient-to-r from-white to-sky-50 p-4 rounded-xl shadow-lg border border-sky-100 flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 text-xl" style={{ fontFamily: 'Nunito, sans-serif' }}>SKKN PRO</h1>
+            <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 text-xl" style={{ fontFamily: 'Nunito, sans-serif' }}>SKKN PRO 2026</h1>
             <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
               {STEPS_INFO[state.step < 9 ? state.step : 8].label}
             </span>
