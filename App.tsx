@@ -317,20 +317,22 @@ const App: React.FC = () => {
     console.log('🗑 Đã xóa phiên làm việc đã lưu');
   }, []);
 
-  // Helper: Tính toán phân bổ trang cho từng phần sáng kiến (8-12 trang)
+  // Helper: Tính toán phân bổ trang cho từng phần sáng kiến (10-12 trang, NGHIÊM NGẶT)
   const getPageAllocation = useCallback(() => {
-    if (!userInfo.pageLimit || typeof userInfo.pageLimit !== 'number') return null;
-
-    const pages = userInfo.pageLimit;
+    // Mặc định 10 trang nếu không có pageLimit, tối đa 12
+    const pages = Math.min(12, Math.max(10, (userInfo.pageLimit && typeof userInfo.pageLimit === 'number') ? userInfo.pageLimit : 10));
     const wordsPerPage = 350;
     const charsPerPage = 2500;
 
-    // Phân bổ theo mẫu: II (20%), III.1 (40%), III.2 (18%), III.3 (12%), III.4 (10%)
-    const partII_pages = Math.max(1, Math.round(pages * 0.20)); // 1.5-2.5 trang
-    const partIII_1_pages = Math.max(2, Math.round(pages * 0.40)); // 3-5 trang
-    const partIII_2_pages = Math.max(1, Math.round(pages * 0.18)); // 1.5-2 trang
-    const partIII_3_pages = Math.max(1, Math.round(pages * 0.12)); // 1-1.5 trang
-    const partIII_4_pages = Math.max(1, pages - partII_pages - partIII_1_pages - partIII_2_pages - partIII_3_pages);
+    // Phân bổ CỨNG theo dung lượng chuẩn SKKN:
+    // II: 2 trang | III.1: 4 trang | III.2: 2 trang | III.3: 1 trang | III.4: 1 trang = 10 trang
+    // Nếu pages > 10, phần dư thêm vào III.1 (trái tim sáng kiến)
+    const extraPages = Math.max(0, pages - 10);
+    const partII_pages = 2;
+    const partIII_1_pages = 4 + extraPages; // Phần quan trọng nhất được thêm trang
+    const partIII_2_pages = 2;
+    const partIII_3_pages = 1;
+    const partIII_4_pages = 1;
 
     return {
       totalPages: pages,
@@ -349,15 +351,21 @@ const App: React.FC = () => {
   // Helper: Tạo prompt giới hạn số từ/trang cho MỘT phần cụ thể đang viết
   const getSectionPagePrompt = useCallback((sectionName: string, sectionKey: 'partII' | 'partIII_1' | 'partIII_2' | 'partIII_3' | 'partIII_4') => {
     const alloc = getPageAllocation();
-    if (!alloc) return '';
 
     const section = alloc[sectionKey];
+    const maxChars = Math.ceil(section.chars * 1.1); // Chỉ cho phép vượt 10%
     return `
-🚨 GIỚI HẠN SỐ TRANG CHO PHẦN NÀY (BẮT BUỘC):
-📌 ${sectionName}: PHẢI viết khoảng ${section.pages} TRANG (≈ ${section.words.toLocaleString()} từ ≈ ${section.chars.toLocaleString()} ký tự)
-⚠️ Trong tổng ${alloc.totalPages} trang sáng kiến, phần này chiếm ${section.pages} trang.
-🚫 KHÔNG viết quá ${Math.ceil(section.pages * 1.15)} trang và KHÔNG viết dưới ${Math.max(1, Math.floor(section.pages * 0.85))} trang.
-✅ Viết CÔ ĐỌNG, SÚC TÍCH nhưng ĐẦY ĐỦ NỘI DUNG.
+🚨🚨🚨 GIỚI HẠN TRANG CHO PHẦN NÀY - TUYỆT ĐỐI KHÔNG VƯỢT QUÁ 🚨🚨🚨
+📌 ${sectionName}: ĐÚNG ${section.pages} TRANG (≈ ${section.words.toLocaleString()} từ ≈ ${section.chars.toLocaleString()} ký tự)
+🚫 TRẦN TUYỆT ĐỐI: KHÔNG QUÁ ${maxChars.toLocaleString()} ký tự. DỪNG NGAY khi gần đạt.
+⚠️ Sáng kiến tổng cộng chỉ ${alloc.totalPages} trang. Mỗi từ phải có giá trị.
+
+📝 QUY TẮC VIẾT GỌN:
+- KHÔNG mở đầu lan man, đi thẳng vào vấn đề
+- KHÔNG lặp lại ý đã viết ở phần trước
+- Dùng bảng biểu thay cho mô tả dài dòng
+- Mỗi đoạn văn tối đa 4-5 câu, mỗi câu mang thông tin mới
+- Giọng văn TỰ NHIÊN, không sáo rỗng, không khuôn mẫu
 `;
   }, [getPageAllocation]);
 
@@ -368,24 +376,30 @@ const App: React.FC = () => {
     const requirements: string[] = [];
 
     const alloc = getPageAllocation();
-    if (alloc) {
-      requirements.push(`
+    requirements.push(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚨🚨🚨 GIỚI HẠN SỐ TRANG - BẮT BUỘC TUYỆT ĐỐI 🚨🚨🚨
+🚨🚨🚨 GIỚI HẠN SỐ TRANG - NGHIÊM NGẶT TUYỆT ĐỐI 🚨🚨🚨
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📌 TỔNG SỐ TRANG YÊU CẦU: ${alloc.totalPages} TRANG (toàn bộ bản mô tả sáng kiến 8-12 trang)
+📌 TỔNG SỐ TRANG: ${alloc.totalPages} TRANG (KHÔNG HƠN, KHÔNG KÉM)
 
-📊 PHÂN BỔ CHI TIẾT TỪNG PHẦN:
-│ Phần II (Giải pháp đã biết)     │ ${alloc.partII.pages} trang    │
-│ Phần III.1 (Nội dung giải pháp) │ ${alloc.partIII_1.pages} trang   │
-│ Phần III.2 (Tính mới, sáng tạo) │ ${alloc.partIII_2.pages} trang    │
-│ Phần III.3 (Phạm vi ảnh hưởng)  │ ${alloc.partIII_3.pages} trang    │
-│ Phần III.4 (Hiệu quả, lợi ích)  │ ${alloc.partIII_4.pages} trang    │
+📊 PHÂN BỔ CỨNG:
+│ Phần II (Giải pháp đã biết)     │ ${alloc.partII.pages} trang (≤${alloc.partII.chars.toLocaleString()} ký tự) │
+│ Phần III.1 (Nội dung giải pháp) │ ${alloc.partIII_1.pages} trang (≤${alloc.partIII_1.chars.toLocaleString()} ký tự) │
+│ Phần III.2 (Tính mới, sáng tạo) │ ${alloc.partIII_2.pages} trang (≤${alloc.partIII_2.chars.toLocaleString()} ký tự) │
+│ Phần III.3 (Phạm vi ảnh hưởng)  │ ${alloc.partIII_3.pages} trang (≤${alloc.partIII_3.chars.toLocaleString()} ký tự) │
+│ Phần III.4 (Hiệu quả, lợi ích)  │ ${alloc.partIII_4.pages} trang (≤${alloc.partIII_4.chars.toLocaleString()} ký tự) │
 
-🚫 CẢNH BÁO: NẾU VƯỢT QUÁ ${alloc.totalPages} TRANG → VI PHẠM YÊU CẦU!
-✅ MỤC TIÊU: Viết CÔ ĐỌNG, SÚC TÍCH nhưng vẫn ĐẦY ĐỦ NỘI DUNG.`);
-    }
+🚫 CẢNH BÁO: VIẾT VƯỢT QUÁ SỐ TRANG = THẤT BẠI!
+
+📝 NGUYÊN TẮC VIẾT GỌN - KHÔNG LAN MAN:
+1. ĐI THẲNG VÀO VẤN ĐỀ, không mở đầu dài dòng
+2. MỖI CÂU phải mang thông tin MỚI, không lặp lại
+3. Dùng BẢNG BIỂU thay cho mô tả dài
+4. Đoạn văn ngắn (3-5 câu), ý rõ ràng
+5. GIỌNG VĂN TỰ NHIÊN - viết như người thật đang kể, không sáo rỗng
+6. KHÔNG dùng các cụm mở đầu cũ mòn: "Trong bối cảnh...", "Trong thời đại..."
+7. KHÔNG kê khai lý thuyết suông, phải gắn với thực tế`);
 
     if (userInfo.includePracticalExamples) {
       requirements.push(`
@@ -976,9 +990,9 @@ Chúc mừng bạn đã hoàn thành bản mô tả sáng kiến!`,
   // Export to Word
   const exportToWord = async () => {
     try {
-      const { exportMarkdownToDocx } = await import('./services/docxExporter');
+      const { exportSKKNToDocx } = await import('./services/docxExporter');
       const filename = `SangKien_${userInfo.topic.substring(0, 30).replace(/[^a-zA-Z0-9\u00C0-\u1EF9]/g, '_')}.docx`;
-      await exportMarkdownToDocx(state.fullDocument, filename);
+      await exportSKKNToDocx(state.fullDocument, userInfo, filename);
     } catch (error: any) {
       console.error('Export error:', error);
       alert('Có lỗi khi xuất file. Vui lòng thử lại.');

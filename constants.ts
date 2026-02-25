@@ -4,35 +4,43 @@ export const MODEL_NAME = 'gemini-3-flash-preview';
 
 // Thứ tự fallback: nếu model đang chọn lỗi, tự động thử các model khác theo thứ tự này
 export const FALLBACK_MODELS = [
-   'gemini-3-flash-preview',
-   'gemini-3-pro-preview',
-   'gemini-2.5-flash'
+    'gemini-3-flash-preview',
+    'gemini-3-pro-preview',
+    'gemini-2.5-flash'
 ];
 
 // Thông tin hiển thị cho các model AI
 export const MODEL_INFO: Record<string, { name: string; description: string; isDefault?: boolean }> = {
-   'gemini-3-flash-preview': {
-      name: 'Gemini 3 Flash',
-      description: 'Nhanh, hiệu quả cho tác vụ thông thường',
-      isDefault: true
-   },
-   'gemini-3-pro-preview': {
-      name: 'Gemini 3 Pro',
-      description: 'Mạnh mẽ, phù hợp tác vụ phức tạp'
-   },
-   'gemini-2.5-flash': {
-      name: 'Gemini 2.5 Flash',
-      description: 'Ổn định, tốc độ cao'
-   }
+    'gemini-3-flash-preview': {
+        name: 'Gemini 3 Flash',
+        description: 'Nhanh, hiệu quả cho tác vụ thông thường',
+        isDefault: true
+    },
+    'gemini-3-pro-preview': {
+        name: 'Gemini 3 Pro',
+        description: 'Mạnh mẽ, phù hợp tác vụ phức tạp'
+    },
+    'gemini-2.5-flash': {
+        name: 'Gemini 2.5 Flash',
+        description: 'Ổn định, tốc độ cao'
+    }
 };
 
 export const SYSTEM_INSTRUCTION = `
-# 🔮 KÍCH HOẠT CHẾ ĐỘ: CHUYÊN GIA VIẾT BẢN MÔ TẢ SÁNG KIẾN (MẪU HẢI PHÒNG)
+# 🔮 KÍCH HOẠT CHẾ ĐỘ: CHUYÊN GIA VIẾT BẢN MÔ TẢ SÁNG KIẾN
 
 ## 👑 PHẦN 1: THIẾT LẬP VAI TRÒ & TƯ DUY CỐT LÕI
 Bạn là **Chuyên gia Giáo dục & Thẩm định Sáng kiến** hàng đầu Việt Nam.
-Nhiệm vụ: Viết BẢN MÔ TẢ SÁNG KIẾN chất lượng cao, ngắn gọn 8-12 trang theo đúng mẫu quy định.
-Tuân thủ 10 nguyên tắc vàng chống đạo văn và nâng tầm chất lượng: Không sao chép, tư duy mới, xử lý lý thuyết, paraphrase luật, tạo số liệu logic, giải pháp cụ thể, ngôn ngữ chuyên ngành.
+Nhiệm vụ: Viết BẢN MÔ TẢ SÁNG KIẾN chất lượng cao, NGHIÊM NGẶT 10-12 trang theo đúng mẫu quy định.
+
+🚨 NGUYÊN TẮC TỐI THƯỢNG VỀ DUNG LƯỢNG:
+- TỔNG sáng kiến: 10-12 trang, TUYỆT ĐỐI KHÔNG VƯỢT
+- Phân bổ CỨNG: II (2 trang) | III.1 (4 trang) | III.2 (2 trang) | III.3 (1 trang) | III.4 (1 trang)
+- Mỗi câu phải mang thông tin mới, KHÔNG lan man, KHÔNG lặp ý
+- Giọng văn TỰ NHIÊN: viết như người thật đang kể trải nghiệm, không sáo rỗng, không khuôn mẫu
+- Đi thẳng vào vấn đề, KHÔNG mở đầu dài dòng kiểu "Trong bối cảnh...", "Trong thời đại..."
+
+Tuân thủ 10 nguyên tắc vàng chống đạo văn: Không sao chép, tư duy mới, xử lý lý thuyết, paraphrase, tạo số liệu logic, giải pháp cụ thể, ngôn ngữ chuyên ngành.
 
 ## 🎯 PHẦN 2: QUY TẮC VIẾT SÁNG KIẾN CHUẨN KHOA HỌC - TRÁNH ĐẠO VĂN (BẮT BUỘC)
 
@@ -248,15 +256,15 @@ VIẾT PHẦN III.1: NỘI DUNG GIẢI PHÁP ĐỀ NGHỊ CÔNG NHẬN SÁNG KI�
 `;
 
 export const STEPS_INFO = {
-   [0]: { label: "Thông tin", description: "Thiết lập thông tin cơ bản" },
-   [1]: { label: "Lập Dàn Ý", description: "Xây dựng khung sườn cho sáng kiến" },
-   [2]: { label: "Phần I", description: "Thông tin chung về sáng kiến" },
-   [3]: { label: "Phần II", description: "Mô tả giải pháp đã biết" },
-   [4]: { label: "Phần III.1", description: "Nội dung giải pháp đề nghị" },
-   [5]: { label: "Phần III.2", description: "Tính mới, tính sáng tạo" },
-   [6]: { label: "Phần III.3", description: "Phạm vi ảnh hưởng" },
-   [7]: { label: "Phần III.4", description: "Hiệu quả, lợi ích" },
-   [8]: { label: "Hoàn tất", description: "Đã xong" }
+    [0]: { label: "Thông tin", description: "Thiết lập thông tin cơ bản" },
+    [1]: { label: "Lập Dàn Ý", description: "Xây dựng khung sườn cho sáng kiến" },
+    [2]: { label: "Phần I", description: "Thông tin chung về sáng kiến" },
+    [3]: { label: "Phần II", description: "Mô tả giải pháp đã biết" },
+    [4]: { label: "Phần III.1", description: "Nội dung giải pháp đề nghị" },
+    [5]: { label: "Phần III.2", description: "Tính mới, tính sáng tạo" },
+    [6]: { label: "Phần III.3", description: "Phạm vi ảnh hưởng" },
+    [7]: { label: "Phần III.4", description: "Hiệu quả, lợi ích" },
+    [8]: { label: "Hoàn tất", description: "Đã xong" }
 };
 
 // Danh sách cấp học bậc cao (Trung cấp, Cao đẳng, Đại học)
@@ -264,13 +272,13 @@ export const HIGHER_ED_LEVELS = ['Trung cấp', 'Cao đẳng', 'Đại học'];
 
 // Các lựa chọn khối lớp cho bậc cao
 export const HIGHER_ED_GRADES = [
-   'Sinh viên năm 1',
-   'Sinh viên năm 2',
-   'Sinh viên năm 3',
-   'Sinh viên năm 4',
-   'Sinh viên năm 5',
-   'Sinh viên năm 6',
-   'Giảng viên',
+    'Sinh viên năm 1',
+    'Sinh viên năm 2',
+    'Sinh viên năm 3',
+    'Sinh viên năm 4',
+    'Sinh viên năm 5',
+    'Sinh viên năm 6',
+    'Giảng viên',
 ];
 
 // Prompt bổ sung chuyên biệt khi chọn bậc cao (Trung cấp, Cao đẳng, Đại học)
