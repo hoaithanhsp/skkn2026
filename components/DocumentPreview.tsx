@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -224,10 +224,20 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
     }
   };
 
-  // Chỉ format + chuẩn hóa viết hoa khi KHÔNG streaming (tránh tính toán nặng mỗi chunk)
-  const formattedContent = useMemo(() => {
-    if (isStreaming) return content;
-    return fixVietnameseCapitalization(formatContent(content));
+  // Format + chuẩn hóa viết hoa khi KHÔNG streaming
+  // Dùng debounce thay vì useMemo để tránh block main thread trên document lớn (>30KB)
+  const [formattedContent, setFormattedContent] = useState(content);
+
+  useEffect(() => {
+    if (isStreaming) {
+      setFormattedContent(content);
+      return;
+    }
+    // Debounce 100ms: cho phép main thread render trước, xử lý formatting sau
+    const timer = setTimeout(() => {
+      setFormattedContent(fixVietnameseCapitalization(formatContent(content)));
+    }, 100);
+    return () => clearTimeout(timer);
   }, [content, isStreaming]);
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { UserInfo, GenerationStep, GenerationState, SKKNTemplate } from './types';
 import { STEPS_INFO, SECTION_III_1_PROMPT, FALLBACK_MODELS, HIGHER_ED_LEVELS, HIGHER_ED_SYSTEM_INSTRUCTION } from './constants';
 import { initializeGeminiChat, sendMessageStream, getFriendlyErrorMessage, parseApiError, getChatHistory, setChatHistory } from './services/geminiService';
@@ -171,11 +171,16 @@ const App: React.FC = () => {
     customTemplate: undefined
   });
 
+  // Flag ngăn vòng lặp khôi phục ref docs
+  const refDocsRestoredRef = useRef(false);
+
   // Khôi phục referenceDocuments từ sessionStorage khi mount
   useEffect(() => {
+    if (refDocsRestoredRef.current) return;
     try {
       const savedRefDocs = sessionStorage.getItem(SESSION_REF_DOCS_KEY);
       if (savedRefDocs && !userInfo.referenceDocuments) {
+        refDocsRestoredRef.current = true;
         setUserInfo(prev => ({ ...prev, referenceDocuments: savedRefDocs }));
         console.log(`📄 Đã khôi phục tài liệu tham khảo từ session (${(savedRefDocs.length / 1024).toFixed(1)}KB)`);
       }
@@ -246,16 +251,17 @@ const App: React.FC = () => {
     }
   }, [state.step, state.messages, state.fullDocument, state.isStreaming, userInfo, appendixDocument, outlineFeedback]);
 
-  // Tự động lưu khi state thay đổi (debounce 2 giây)
+  // Tự động lưu khi state thay đổi (debounce 5 giây, loại bỏ saveSession khỏi deps để tránh loop)
   useEffect(() => {
     if (state.step <= GenerationStep.INPUT_FORM || state.isStreaming) return;
 
     const timer = setTimeout(() => {
       saveSession();
-    }, 2000);
+    }, 5000);
 
     return () => clearTimeout(timer);
-  }, [state.step, state.fullDocument, appendixDocument, saveSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.step, state.fullDocument, appendixDocument]);
 
   // Hàm khôi phục phiên
   const restoreSession = useCallback((sessionData: SessionData) => {
@@ -1118,10 +1124,22 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
 `;
 
       let appendixText = "";
+      let pendingAppendix = '';
+      let lastFlushAppendix = Date.now();
+      const FLUSH_APPENDIX = 150; // ms - throttle giống các phần khác
       await sendMessageStream(appendixPrompt, (chunk) => {
         appendixText += chunk;
-        setAppendixDocument(appendixText);
+        pendingAppendix += chunk;
+        const now = Date.now();
+        if (now - lastFlushAppendix >= FLUSH_APPENDIX) {
+          lastFlushAppendix = now;
+          const text = appendixText;
+          pendingAppendix = '';
+          setAppendixDocument(text);
+        }
       });
+      // Flush cuối cùng
+      setAppendixDocument(appendixText);
 
       setIsAppendixLoading(false);
     } catch (error: any) {
