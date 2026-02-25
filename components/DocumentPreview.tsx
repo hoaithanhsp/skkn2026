@@ -7,148 +7,130 @@ import { Edit, Save, X, FileText } from 'lucide-react';
 import { Button } from './Button';
 
 /**
+ * Lightweight: Chỉ hiển thị phần cuối document khi đang streaming
+ * Tránh ReactMarkdown parse lại 15,000+ ký tự mỗi chunk
+ */
+function StreamingPreview({ content }: { content: string }) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Chỉ lấy ~4000 ký tự cuối để render nhẹ
+  const TAIL_SIZE = 4000;
+  const hasTruncated = content.length > TAIL_SIZE;
+  const visibleContent = hasTruncated ? content.slice(-TAIL_SIZE) : content;
+
+  // Auto-scroll xuống cuối
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'auto' });
+  }, [visibleContent]);
+
+  return (
+    <div className="h-full overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar p-8 md:p-12">
+      <article className="prose prose-sky prose-lg max-w-none text-gray-900 pb-12">
+        {hasTruncated && (
+          <div className="text-center text-gray-400 text-sm mb-4 py-2 border-b border-dashed border-gray-200">
+            ⬆️ Nội dung phía trên ({Math.round((content.length - TAIL_SIZE) / 1000)}k ký tự) sẽ hiển thị đầy đủ sau khi viết xong
+          </div>
+        )}
+        {/* Render plain text với basic formatting - CỰC NHẸ */}
+        <div className="whitespace-pre-wrap font-serif text-base leading-relaxed">
+          {visibleContent.split('\n').map((line, i) => {
+            const trimmed = line.trim();
+            // Headings
+            if (trimmed.startsWith('### ')) return <h3 key={i} className="font-bold text-lg mt-4 mb-2">{trimmed.slice(4)}</h3>;
+            if (trimmed.startsWith('## ')) return <h2 key={i} className="font-bold text-xl mt-5 mb-2">{trimmed.slice(3)}</h2>;
+            if (trimmed.startsWith('# ')) return <h1 key={i} className="font-bold text-2xl mt-6 mb-3">{trimmed.slice(2)}</h1>;
+            // Table rows
+            if (trimmed.startsWith('|')) return <div key={i} className="font-mono text-sm bg-gray-50 px-2">{trimmed}</div>;
+            // Separator
+            if (trimmed === '---' || trimmed === '***') return <hr key={i} className="my-4" />;
+            // Bold markers
+            if (trimmed.startsWith('**') && trimmed.endsWith('**')) return <p key={i} className="font-bold my-1">{trimmed.slice(2, -2)}</p>;
+            // List items
+            if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) return <p key={i} className="ml-4 my-0.5">• {trimmed.slice(2)}</p>;
+            if (/^\d+\.\s/.test(trimmed)) return <p key={i} className="ml-4 my-0.5">{trimmed}</p>;
+            // Empty line
+            if (!trimmed) return <div key={i} className="h-2" />;
+            // Normal text
+            return <p key={i} className="my-0.5">{trimmed}</p>;
+          })}
+        </div>
+        <div className="flex items-center gap-2 mt-4 text-green-600 animate-pulse">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" />
+          <span className="text-sm font-medium">Đang viết...</span>
+        </div>
+        <div ref={bottomRef} />
+      </article>
+    </div>
+  );
+}
+
+/**
  * Format content để đảm bảo xuống dòng đúng cách
- * Xử lý các pattern thường gặp trong văn bản AI output
  * BẢO TOÀN các bảng markdown (|...|)
  */
 function formatContent(text: string): string {
   if (!text) return text;
 
-  // Tách văn bản thành các đoạn, xác định đoạn nào là bảng
   const lines = text.split('\n');
   const processedLines: string[] = [];
   let inTable = false;
-  let tableBuffer: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmedLine = line.trim();
-
-    // Kiểm tra xem dòng có phải là phần của bảng markdown không
-    // Bảng markdown có dạng: | cell | cell | hoặc |---|---|
     const isTableLine = /^\|.*\|$/.test(trimmedLine) || /^\|[\s\-:]+\|/.test(trimmedLine);
 
     if (isTableLine) {
       if (!inTable) {
-        // Bắt đầu bảng mới - xử lý buffer trước đó
         if (processedLines.length > 0) {
-          // Thêm dòng trống trước bảng nếu cần
           const lastLine = processedLines[processedLines.length - 1];
-          if (lastLine && lastLine.trim() !== '') {
-            processedLines.push('');
-          }
+          if (lastLine && lastLine.trim() !== '') processedLines.push('');
         }
         inTable = true;
       }
-      // Thêm dòng bảng trực tiếp, không xử lý
       processedLines.push(line);
     } else {
       if (inTable) {
-        // Kết thúc bảng
         inTable = false;
-        // Thêm dòng trống sau bảng
-        if (trimmedLine !== '') {
-          processedLines.push('');
-        }
+        if (trimmedLine !== '') processedLines.push('');
       }
-      // Xử lý dòng thường
       processedLines.push(line);
     }
   }
 
-  // Ghép lại thành văn bản và xử lý các pattern (chỉ cho phần không phải bảng)
   let formatted = processedLines.join('\n');
 
-  // Tách lại để xử lý, nhưng bảo toàn bảng
   const segments: { isTable: boolean; content: string }[] = [];
-  const tableRegex = /((?:^\|.*\|$\n?)+)/gm;
+  const tablePattern = /((?:^[ \t]*\|.*\|[ \t]*$[\r\n]*)+)/gm;
   let lastIndex = 0;
   let match;
 
-  // Reset regex
-  const tablePattern = /((?:^[ \t]*\|.*\|[ \t]*$[\r\n]*)+)/gm;
-
   while ((match = tablePattern.exec(formatted)) !== null) {
-    // Thêm phần text trước bảng
     if (match.index > lastIndex) {
-      segments.push({
-        isTable: false,
-        content: formatted.slice(lastIndex, match.index)
-      });
+      segments.push({ isTable: false, content: formatted.slice(lastIndex, match.index) });
     }
-    // Thêm bảng
-    segments.push({
-      isTable: true,
-      content: match[1]
-    });
+    segments.push({ isTable: true, content: match[1] });
     lastIndex = match.index + match[0].length;
   }
-
-  // Thêm phần còn lại sau bảng cuối
   if (lastIndex < formatted.length) {
-    segments.push({
-      isTable: false,
-      content: formatted.slice(lastIndex)
-    });
+    segments.push({ isTable: false, content: formatted.slice(lastIndex) });
   }
-
-  // Nếu không tìm thấy bảng, xử lý toàn bộ như text thường
   if (segments.length === 0) {
     segments.push({ isTable: false, content: formatted });
   }
 
-  // Xử lý từng segment
   const result = segments.map(segment => {
-    if (segment.isTable) {
-      // Giữ nguyên bảng
-      return segment.content;
-    }
+    if (segment.isTable) return segment.content;
 
     let content = segment.content;
-
-    // Pattern 1: Xuống dòng trước "• Bước X:" hoặc "Bước X:" 
     content = content.replace(/([^\n])\s*(•\s*Bước\s+\d+)/gi, '$1\n\n$2');
     content = content.replace(/([^\n])\s*(Bước\s+\d+\s*:)/gi, '$1\n\n$2');
-
-    // Pattern 2: Xuống dòng trước bullet points "•" nếu không ở đầu dòng
     content = content.replace(/([^\n•])\s*•\s+/g, '$1\n\n• ');
-
-    // Pattern 3: Xuống dòng trước các mục số "1.", "2.", "3." etc nếu không ở đầu dòng
     content = content.replace(/([^\n\d])\s+(\d+\.\s+[A-ZĐ])/g, '$1\n\n$2');
-
-    // Pattern 4: Xuống dòng trước "Trạm X:" patterns
     content = content.replace(/([^\n])\s*(Trạm\s+\d+\s*:)/gi, '$1\n\n$2');
-
-    // Pattern 5: Xuống dòng trước các tiêu đề có số như "1.1.", "1.2.", "2.1." etc
     content = content.replace(/([^\n])\s+(\d+\.\d+\.?\s+[A-ZĐ])/g, '$1\n\n$2');
-
-    // Pattern 6: Xuống dòng trước các keyword quan trọng
-    const keywords = [
-      'Nhiệm vụ:',
-      'Hoạt động nhóm:',
-      'Công thức minh họa:',
-      'Kiểm tra:',
-      'Ví dụ:',
-      'Lưu ý:',
-      'Ghi nhận kết quả:',
-      'Báo cáo:',
-      'Công cụ/tài liệu hỗ trợ:',
-      'Phần mềm:',
-      'Prompt mẫu cho Gemini:',
-    ];
-
-    keywords.forEach(keyword => {
-      const regex = new RegExp(`([^\\n])\\s*(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'g');
-      content = content.replace(regex, '$1\n\n$2');
-    });
-
-    // Pattern 7: Đảm bảo sau dấu "." có xuống dòng nếu tiếp theo là chữ in hoa (câu mới)
-    // Chỉ áp dụng khi có nhiều spaces liên tiếp (dấu hiệu của đoạn văn bị dính)
     content = content.replace(/\.(\s{2,})([A-ZĐÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴ])/g, '.\n\n$2');
-
-    // Dọn dẹp: Loại bỏ quá nhiều dòng trống liên tiếp (giữ tối đa 2)
     content = content.replace(/\n{4,}/g, '\n\n\n');
-
     return content;
   }).join('');
 
@@ -159,25 +141,21 @@ interface Props {
   content: string;
   onUpdate?: (newContent: string) => void;
   isEditable?: boolean;
+  isStreaming?: boolean;
 }
 
-export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable = false }) => {
+export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable = false, isStreaming = false }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempContent, setTempContent] = useState(content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Sync content when not editing (e.g. streaming updates)
   useEffect(() => {
-    if (!isEditing) {
-      setTempContent(content);
-    }
+    if (!isEditing) setTempContent(content);
   }, [content, isEditing]);
 
   const handleSave = () => {
-    if (onUpdate) {
-      onUpdate(tempContent);
-    }
+    if (onUpdate) onUpdate(tempContent);
     setIsEditing(false);
   };
 
@@ -191,7 +169,6 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
       handleCancel();
     } else {
       setIsEditing(true);
-      // Focus textarea after render
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
@@ -201,8 +178,11 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
     }
   };
 
-  // Memoize formatted content để tránh tính toán lại mỗi lần render
-  const formattedContent = useMemo(() => formatContent(content), [content]);
+  // Chỉ format khi KHÔNG streaming (tránh regex nặng mỗi chunk)
+  const formattedContent = useMemo(() => {
+    if (isStreaming) return content; // Skip formatting khi streaming
+    return formatContent(content);
+  }, [content, isStreaming]);
 
   return (
     <div className="bg-white shadow-xl rounded-xl border border-gray-200 min-h-[600px] h-full overflow-hidden flex flex-col relative">
@@ -217,10 +197,11 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
           <span className="text-gray-500 text-sm font-medium flex items-center gap-2">
             <FileText size={14} />
             Bản thảo SKKN.docx
+            {isStreaming && <span className="text-green-600 animate-pulse text-xs ml-2">● Đang viết</span>}
           </span>
         </div>
 
-        {isEditable && (
+        {isEditable && !isStreaming && (
           <div className="flex gap-2">
             {isEditing ? (
               <>
@@ -260,7 +241,11 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
             placeholder="Nhập nội dung tại đây..."
             spellCheck={false}
           />
+        ) : isStreaming ? (
+          /* Khi streaming: dùng lightweight renderer - KHÔNG dùng ReactMarkdown */
+          <StreamingPreview content={content} />
         ) : (
+          /* Khi xong: full ReactMarkdown render */
           <div className="h-full overflow-y-auto max-h-[calc(100vh-140px)] custom-scrollbar p-8 md:p-12">
             {content ? (
               <article className="prose prose-sky prose-lg max-w-none text-gray-900 pb-12">
@@ -281,7 +266,6 @@ export const DocumentPreview: React.FC<Props> = ({ content, onUpdate, isEditable
           </div>
         )}
 
-        {/* Overlay for save hint */}
         {isEditing && (
           <div className="absolute bottom-4 right-6 bg-black/75 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm">
             Nhấn "Lưu thay đổi" để cập nhật nội dung cho AI
