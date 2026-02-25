@@ -1006,6 +1006,45 @@ Chúc mừng bạn đã hoàn thành bản mô tả sáng kiến!`,
       // Flush phần còn lại sau khi stream kết thúc
       flushPending();
 
+      // Auto-continue: Nếu output bị cắt giữa chừng (AI hết token), tự động yêu cầu viết tiếp
+      const trimmedSection = sectionText.trim();
+      const lastLine = trimmedSection.split('\n').pop()?.trim() || '';
+      const isTruncated = (
+        lastLine.endsWith('|') || // Bảng bị cắt
+        lastLine.endsWith(',') || // Câu bị cắt
+        lastLine.endsWith(':') || // Đang liệt kê
+        (lastLine.length > 10 && !lastLine.endsWith('.') && !lastLine.endsWith('!') && !lastLine.endsWith('"') && !lastLine.endsWith(')') && !lastLine.endsWith('*') && !lastLine.endsWith('---') && !lastLine.endsWith('```')) // Kết thúc bất thường
+      );
+
+      if (isTruncated && shouldAppend) {
+        console.log('⚠️ Output bị cắt, tự động tiếp tục viết...');
+        // Gửi lệnh tiếp tục
+        let continuedText = '';
+        let pendingCont = '';
+        let lastFlushCont = Date.now();
+
+        await sendMessageStream(
+          'Tiếp tục viết từ chỗ bạn dừng lại. KHÔNG lặp lại nội dung đã viết. Viết tiếp ngay từ chỗ bị cắt.',
+          (chunk) => {
+            continuedText += chunk;
+            pendingCont += chunk;
+            const now = Date.now();
+            if (now - lastFlushCont >= FLUSH_INTERVAL) {
+              lastFlushCont = now;
+              const toFlush = pendingCont;
+              pendingCont = '';
+              setState(prev => ({ ...prev, fullDocument: prev.fullDocument + toFlush }));
+            }
+          }
+        );
+        // Flush cuối
+        if (pendingCont) {
+          const toFlush = pendingCont;
+          pendingCont = '';
+          setState(prev => ({ ...prev, fullDocument: prev.fullDocument + toFlush }));
+        }
+      }
+
       setState(prev => ({ ...prev, isStreaming: false }));
 
     } catch (error: any) {
