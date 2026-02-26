@@ -2,6 +2,16 @@
 export const accounts = [
     { username: "admin", password: "admin123", name: "Quản trị viên" },
     { username: "duonghangdtntls@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "theducsp@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "trungtruonglechan@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "nhantam.nhan@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "phuongbang2108@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "Bqt.thehetre@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "dn444034@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "tranthuytrang76xp@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "tientuandmc@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "dotanlocldst@gmail.com", password: "SKKN100", name: "GV" },
+    { username: "bachtrang.sptoan@gmail.com", password: "SKKN100", name: "GV" },
     { username: "Geksor81gl@gmail.com", password: "SKKN100", name: "GV" },
     { username: "tkzm4932@gmail.com", password: "SKKN100", name: "GV" },
     { username: "lamphong1989@gmail.com", password: "SKKN100", name: "GV" },
@@ -64,6 +74,7 @@ export const accounts = [
     { username: "Xhuong91@gmail.com", password: "SKKN100", name: "Nguyễn Thị Xuân Hương" },
     { username: "giaovien", password: "gv2025", name: "Giáo viên" },
 ];
+
 
 
 
