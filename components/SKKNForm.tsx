@@ -840,233 +840,108 @@ export const SKKNForm: React.FC<Props> = ({ userInfo, onChange, onSubmit, onManu
             </span>
           </h3>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* LEFT COLUMN: Reference Documents */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
-              {isProcessingRefFiles && (
-                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 backdrop-blur-sm rounded-lg">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
-                    <p className="text-sm font-medium text-sky-700">{fileProgress || 'Đang đọc tài liệu...'}</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-between items-start mb-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Tải lên tài liệu PDF/Word để AI tham khảo:
-                </label>
-                <div className="flex gap-2 flex-shrink-0">
-                  {refFileNames.length > 0 && (
-                    <button
-                      onClick={clearRefDocuments}
-                      className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors border border-red-100"
-                    >
-                      Xóa
-                    </button>
-                  )}
-                  <input
-                    type="file"
-                    ref={refFileInputRef}
-                    onChange={handleRefFileUpload}
-                    className="hidden"
-                    accept=".pdf,.docx,.txt"
-                    multiple
-                  />
-                  <button
-                    onClick={() => refFileInputRef.current?.click()}
-                    className="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-1 rounded hover:bg-sky-100 transition-colors flex items-center gap-1 border border-sky-100"
-                  >
-                    <FileUp size={12} /> Tải lên
-                  </button>
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 relative">
+            {isProcessingRefFiles && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 backdrop-blur-sm rounded-lg">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 text-sky-600 animate-spin" />
+                  <p className="text-sm font-medium text-sky-700">{fileProgress || 'Đang đọc tài liệu...'}</p>
                 </div>
               </div>
+            )}
 
-              {refFileNames.length > 0 ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-500 mb-2">Đã tải ({refFileNames.length} file):</p>
-                  <div className="flex flex-wrap gap-1">
-                    {refFileNames.map((name, index) => (
-                      <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-sky-100 text-sky-800 text-xs rounded-full">
-                        <FileText size={10} />
-                        {name.length > 20 ? name.substring(0, 20) + '...' : name}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Hiển thị thông tin kích thước text đã extract */}
-                  {userInfo.referenceDocuments && (
-                    <div className={`mt-2 p-2 rounded text-xs ${userInfo.referenceDocuments.length > 80000
-                      ? 'bg-amber-50 border border-amber-200 text-amber-700'
-                      : 'bg-green-50 border border-green-200 text-green-700'
-                      }`}>
-                      <p className="font-medium">
-                        📊 {(userInfo.referenceDocuments.length / 1000).toFixed(0)}K ký tự
-                        (~{Math.round(userInfo.referenceDocuments.length / 2500)} trang A4)
-                      </p>
-                      {userInfo.referenceDocuments.length > 80000 && (
-                        <p className="mt-1 text-[11px]">
-                          ⚠️ Nội dung lớn sẽ được tóm tắt (~80K ký tự đầu) khi gửi AI để đảm bảo chất lượng xử lý.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                  {/* Nút Phân tích sơ bộ */}
+            <div className="flex justify-between items-start mb-3">
+              <label className="text-sm font-semibold text-gray-700">
+                Tải lên tài liệu PDF/Word để AI tham khảo:
+              </label>
+              <div className="flex gap-2 flex-shrink-0">
+                {refFileNames.length > 0 && (
                   <button
-                    onClick={handleAnalyzeRefDocs}
-                    disabled={isAnalyzingRef || !apiKey}
-                    className="mt-3 w-full text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-emerald-200 transition-colors"
+                    onClick={clearRefDocuments}
+                    className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors border border-red-100"
                   >
-                    {isAnalyzingRef ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        Đang phân tích...
-                      </>
-                    ) : (
-                      <>
-                        <Search size={14} />
-                        🔍 Phân tích sơ bộ bằng AI
-                      </>
-                    )}
+                    Xóa
                   </button>
-                </div>
-              ) : (
-                <div className="text-center py-3 text-gray-500">
-                  <FileUp size={24} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-xs font-medium text-gray-600 mb-2">Chưa có tài liệu</p>
-                  <div className="text-xs text-left bg-white p-2 rounded border border-gray-100">
-                    <p className="font-semibold text-sky-700 mb-1">💡 Gợi ý:</p>
-                    <ul className="space-y-0.5 text-gray-600 text-[11px]">
-                      <li>• SGK/Sách giáo viên</li>
-                      <li>• Tài liệu chuyên môn</li>
-                      <li>• Đề kiểm tra/Bài tập</li>
-                      <li>• Văn bản pháp quy</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
+                )}
+                <input
+                  type="file"
+                  ref={refFileInputRef}
+                  onChange={handleRefFileUpload}
+                  className="hidden"
+                  accept=".pdf,.docx,.txt"
+                  multiple
+                />
+                <button
+                  onClick={() => refFileInputRef.current?.click()}
+                  className="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-1 rounded hover:bg-sky-100 transition-colors flex items-center gap-1 border border-sky-100"
+                >
+                  <FileUp size={12} /> Tải lên
+                </button>
+              </div>
             </div>
 
-            {/* RIGHT COLUMN: SKKN Template */}
-            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 relative">
-              {isProcessingTemplateFile && (
-                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 backdrop-blur-sm rounded-lg">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
-                    <p className="text-sm font-medium text-amber-700">{fileProgress || 'Đang đọc mẫu...'}</p>
-                  </div>
+            {refFileNames.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 mb-2">Đã tải ({refFileNames.length} file):</p>
+                <div className="flex flex-wrap gap-1">
+                  {refFileNames.map((name, index) => (
+                    <span key={index} className="inline-flex items-center gap-1 px-2 py-1 bg-sky-100 text-sky-800 text-xs rounded-full">
+                      <FileText size={10} />
+                      {name.length > 20 ? name.substring(0, 20) + '...' : name}
+                    </span>
+                  ))}
                 </div>
-              )}
-
-              <div className="flex justify-between items-start mb-3">
-                <label className="text-sm font-semibold text-gray-700">
-                  Tải lên mẫu yêu cầu SKKN:
-                </label>
-                <div className="flex gap-2 flex-shrink-0">
-                  {templateFileName && (
-                    <button
-                      onClick={clearTemplate}
-                      className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 transition-colors border border-red-100"
-                    >
-                      Xóa
-                    </button>
+                {/* Hiển thị thông tin kích thước text đã extract */}
+                {userInfo.referenceDocuments && (
+                  <div className={`mt-2 p-2 rounded text-xs ${userInfo.referenceDocuments.length > 80000
+                    ? 'bg-amber-50 border border-amber-200 text-amber-700'
+                    : 'bg-green-50 border border-green-200 text-green-700'
+                    }`}>
+                    <p className="font-medium">
+                      📊 {(userInfo.referenceDocuments.length / 1000).toFixed(0)}K ký tự
+                      (~{Math.round(userInfo.referenceDocuments.length / 2500)} trang A4)
+                    </p>
+                    {userInfo.referenceDocuments.length > 80000 && (
+                      <p className="mt-1 text-[11px]">
+                        ⚠️ Nội dung lớn sẽ được tóm tắt (~80K ký tự đầu) khi gửi AI để đảm bảo chất lượng xử lý.
+                      </p>
+                    )}
+                  </div>
+                )}
+                {/* Nút Phân tích sơ bộ */}
+                <button
+                  onClick={handleAnalyzeRefDocs}
+                  disabled={isAnalyzingRef || !apiKey}
+                  className="mt-3 w-full text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-emerald-200 transition-colors"
+                >
+                  {isAnalyzingRef ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Đang phân tích...
+                    </>
+                  ) : (
+                    <>
+                      <Search size={14} />
+                      🔍 Phân tích sơ bộ bằng AI
+                    </>
                   )}
-                  <input
-                    type="file"
-                    ref={templateFileInputRef}
-                    onChange={handleTemplateUpload}
-                    className="hidden"
-                    accept=".pdf,.docx,.txt"
-                  />
-                  <button
-                    onClick={() => templateFileInputRef.current?.click()}
-                    className="text-xs font-semibold text-amber-600 bg-amber-100 px-2 py-1 rounded hover:bg-amber-200 transition-colors flex items-center gap-1 border border-amber-200"
-                  >
-                    <FileUp size={12} /> Tải lên
-                  </button>
+                </button>
+              </div>
+            ) : (
+              <div className="text-center py-3 text-gray-500">
+                <FileUp size={24} className="mx-auto mb-2 opacity-50" />
+                <p className="text-xs font-medium text-gray-600 mb-2">Chưa có tài liệu</p>
+                <div className="text-xs text-left bg-white p-2 rounded border border-gray-100">
+                  <p className="font-semibold text-sky-700 mb-1">💡 Gợi ý:</p>
+                  <ul className="space-y-0.5 text-gray-600 text-[11px]">
+                    <li>• SGK/Sách giáo viên</li>
+                    <li>• Tài liệu chuyên môn</li>
+                    <li>• Đề kiểm tra/Bài tập</li>
+                    <li>• Văn bản pháp quy</li>
+                  </ul>
                 </div>
               </div>
-
-              {templateFileName ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-500 mb-2">Mẫu SKKN đã tải:</p>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-amber-100 text-amber-800 rounded-lg">
-                    <FileText size={16} />
-                    <span className="text-sm font-medium truncate">{templateFileName}</span>
-                  </div>
-                  <p className="text-xs text-green-600 font-medium">✓ AI sẽ bám sát cấu trúc mẫu này</p>
-                  {/* Nút Phân tích sơ bộ mẫu SKKN */}
-                  <button
-                    onClick={handleAnalyzeTemplate}
-                    disabled={isAnalyzingTemplate || !apiKey}
-                    className="mt-2 w-full text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border border-emerald-200 transition-colors"
-                  >
-                    {isAnalyzingTemplate ? (
-                      <>
-                        <Loader2 size={14} className="animate-spin" />
-                        Đang phân tích...
-                      </>
-                    ) : (
-                      <>
-                        <Search size={14} />
-                        🔍 Phân tích sơ bộ bằng AI
-                      </>
-                    )}
-                  </button>
-
-                  {/* Hiển thị trạng thái trích xuất cấu trúc */}
-                  {isExtractingStructure && (
-                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200 flex items-center gap-2">
-                      <Loader2 size={16} className="animate-spin text-blue-600" />
-                      <span className="text-xs text-blue-700">Đang trích xuất cấu trúc mẫu...</span>
-                    </div>
-                  )}
-
-                  {/* Hiển thị cấu trúc đã trích xuất */}
-                  {parsedTemplate && parsedTemplate.sections.length > 0 && !isExtractingStructure && (
-                    <div className="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle size={14} className="text-emerald-600" />
-                        <span className="text-xs font-semibold text-emerald-700">
-                          ✅ Đã trích xuất {parsedTemplate.sections.length} mục từ mẫu
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-600 max-h-36 overflow-y-auto bg-white p-2 rounded border border-emerald-100">
-                        <ul className="space-y-0.5">
-                          {parsedTemplate.sections.slice(0, 8).map((s, idx) => (
-                            <li
-                              key={idx}
-                              style={{ paddingLeft: `${(s.level - 1) * 12}px` }}
-                              className={s.level === 1 ? 'font-semibold text-emerald-800' : 'text-gray-600'}
-                            >
-                              {s.level === 1 ? '📌' : s.level === 2 ? '•' : '○'} {s.title}
-                            </li>
-                          ))}
-                          {parsedTemplate.sections.length > 8 && (
-                            <li className="text-gray-400 italic">... và {parsedTemplate.sections.length - 8} mục khác</li>
-                          )}
-                        </ul>
-                      </div>
-                      <p className="text-[10px] text-emerald-600 mt-2 italic">
-                        💡 AI sẽ tạo dàn ý và nội dung theo cấu trúc này
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="text-center py-3 text-gray-500">
-                  <FileText size={24} className="mx-auto mb-2 opacity-50 text-amber-400" />
-                  <p className="text-xs font-medium text-gray-600 mb-2">Chưa có mẫu</p>
-                  <div className="text-xs text-left bg-white p-2 rounded border border-amber-100">
-                    <p className="font-semibold text-amber-700 mb-1">📋 Mẫu yêu cầu SKKN:</p>
-                    <ul className="space-y-0.5 text-gray-600 text-[11px]">
-                      <li>• File Word/PDF mẫu từ Sở/Phòng GD</li>
-                      <li>• AI sẽ bám sát cấu trúc mẫu</li>
-                      <li>• Nếu không có, dùng mẫu chuẩn</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
