@@ -977,6 +977,42 @@ export const SKKNForm: React.FC<Props> = ({ userInfo, onChange, onSubmit, onManu
               <span className="text-xs text-gray-500">(Để trống nếu không giới hạn)</span>
             </div>
 
+            {/* 1b. Số lượng giải pháp */}
+            <div className="flex items-center gap-4 flex-wrap">
+              <label className="text-sm font-medium text-gray-700 w-64 flex items-center gap-2">
+                🎯 Số lượng giải pháp:
+              </label>
+              <div className="flex gap-2">
+                {([0, 1, 2, 3] as const).map((count) => {
+                  const labels: Record<number, string> = {
+                    0: '🤖 Tự động',
+                    1: '1 giải pháp',
+                    2: '2 giải pháp',
+                    3: '3 giải pháp',
+                  };
+                  const isSelected = (userInfo as any).solutionCount === count;
+                  return (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => onChange('solutionCount', count as any)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${isSelected
+                          ? 'bg-purple-600 text-white border-purple-600 shadow-md'
+                          : 'bg-white text-gray-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300'
+                        }`}
+                    >
+                      {labels[count]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {(userInfo as any).solutionCount > 0 && (
+              <p className="text-xs text-purple-600 ml-[17rem] -mt-2">
+                ✅ AI sẽ viết chính xác <strong>{(userInfo as any).solutionCount} giải pháp</strong> trong dàn ý và Phần III.1
+              </p>
+            )}
+
             {/* 2. Thêm bài toán thực tế */}
             <div className="flex items-center gap-3">
               <input
