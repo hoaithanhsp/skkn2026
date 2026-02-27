@@ -165,6 +165,7 @@ const App: React.FC = () => {
     skknTemplate: '',
     specialRequirements: '',
     pageLimit: '',
+    solutionCount: 0,
     includePracticalExamples: false,
     includeStatistics: false,
     requirementsConfirmed: false,
@@ -419,6 +420,14 @@ const App: React.FC = () => {
 - Sử dụng số liệu lẻ tự nhiên, bảng số liệu Markdown chuẩn`);
     }
 
+    if (userInfo.solutionCount > 0) {
+      requirements.push(`
+🎯 SỐ LƯỢNG GIẢI PHÁP - BẮT BUỘC TUYỆT ĐỐI:
+- Người dùng YÊU CẦU CHÍNH XÁC ${userInfo.solutionCount} GIẢI PHÁP.
+- KHÔNG ĐƯỢC viết nhiều hơn hoặc ít hơn ${userInfo.solutionCount} giải pháp.
+- Dàn ý và nội dung Phần III.1 phải có ĐÚNG ${userInfo.solutionCount} giải pháp.`);
+    }
+
     if (userInfo.specialRequirements && userInfo.specialRequirements.trim()) {
       requirements.push(`
 ✏️ YÊU CẦU BỔ SUNG TỪ NGƯỜI DÙNG:
@@ -434,7 +443,7 @@ ${userInfo.specialRequirements}`);
 ${requirements.join('\n')}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 `;
-  }, [userInfo.requirementsConfirmed, userInfo.pageLimit, userInfo.includePracticalExamples, userInfo.includeStatistics, userInfo.specialRequirements, getPageAllocation]);
+  }, [userInfo.requirementsConfirmed, userInfo.pageLimit, userInfo.solutionCount, userInfo.includePracticalExamples, userInfo.includeStatistics, userInfo.specialRequirements, getPageAllocation]);
 
   // Helper function để tạo prompt cấu trúc từ mẫu SKKN đã trích xuất
   const getCustomTemplatePrompt = useCallback(() => {
@@ -610,6 +619,7 @@ YÊU CẦU DÀN Ý (NGẮN GỌN - CHỈ ĐẦU MỤC):
 ✓ Mỗi phần chỉ ghi tiêu đề mục và các ý chính (1-2 dòng mỗi ý)
 ✓ KHÔNG viết đoạn văn dài trong dàn ý
 ✓ Phù hợp với đặc thù môn ${userInfo.subject} và cấp ${userInfo.level}
+${userInfo.solutionCount > 0 ? `✓ PHẦN III.1 PHẢI CÓ ĐÚNG ${userInfo.solutionCount} GIẢI PHÁP (người dùng đã chọn ${userInfo.solutionCount} giải pháp)` : '✓ Phần III.1 nên có 2-3 giải pháp (AI tự quyết định phù hợp)'}
 
 ${getPageLimitPrompt()}
 
@@ -846,11 +856,13 @@ Công nghệ/AI: ${userInfo.applyAI}
 ⚠️ KHÔNG VIẾT: Mục tiêu giải pháp, Cơ sở khoa học, Điều kiện thực hiện, Lưu ý chung
 ⚠️ CHỈ VIẾT: Cách thực hiện cụ thể từng bước — NỔI BẬT, CHI TIẾT, THỰC TẾ
 
-📌 QUY TẮC QUAN TRỌNG:
-- TỐI ĐA 3 GIẢI PHÁP (có thể 2 nếu mỗi giải pháp cần viết sâu)
+📌 QUY TẮC QUAN TRỌNG VỀ SỐ GIẢI PHÁP:
+${userInfo.solutionCount > 0 ? `🚨🚨🚨 NGƯỜI DÙNG ĐÃ CHỌN CHÍNH XÁC ${userInfo.solutionCount} GIẢI PHÁP 🚨🚨🚨
+- BẮT BUỘC viết ĐÚNG ${userInfo.solutionCount} giải pháp, KHÔNG ĐƯỢC viết nhiều hơn hoặc ít hơn!
+- Phân bổ nội dung đều cho ${userInfo.solutionCount} giải pháp để ĐẢM BẢO tổng phần này đạt 3-5 trang` : `- TỐI ĐA 3 GIẢI PHÁP (có thể 2 nếu mỗi giải pháp cần viết sâu)
 - Linh hoạt số giải pháp để ĐẢM BẢO tổng phần này đạt 3-5 trang
 - Nếu đề tài đơn giản → 2 giải pháp, mỗi GP viết KỸ hơn
-- Nếu đề tài phong phú → 3 giải pháp, mỗi GP viết vừa đủ
+- Nếu đề tài phong phú → 3 giải pháp, mỗi GP viết vừa đủ`}
 
 📌 CẤU TRÚC MỖI GIẢI PHÁP (KHAI THÁC TỐI ĐA):
   🔹 Tên giải pháp: Đặt tên ẤN TƯỢNG, SÁNG TẠO (không chung chung)
@@ -1169,7 +1181,7 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
         <div className="mb-8">
           <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 flex items-center gap-2" style={{ fontFamily: 'Nunito, sans-serif' }}>
             <Wand2 className="h-6 w-6 text-blue-500" />
-            SKKN PRO 2026
+            SKKN 2026
           </h1>
           <p className="text-xs text-blue-800 font-medium mt-1.5 tracking-wide">✨ Trợ lý viết Sáng kiến thông minh</p>
         </div>
@@ -1433,7 +1445,7 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
         {/* Mobile Header */}
         <div className="lg:hidden mb-4 bg-gradient-to-r from-white to-sky-50 p-4 rounded-xl shadow-lg border border-sky-100 flex flex-col gap-2">
           <div className="flex justify-between items-center">
-            <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 text-xl" style={{ fontFamily: 'Nunito, sans-serif' }}>SKKN PRO 2026</h1>
+            <h1 className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 text-xl" style={{ fontFamily: 'Nunito, sans-serif' }}>SKKN 2026</h1>
             <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
               {STEPS_INFO[state.step < 9 ? state.step : 8].label}
             </span>
