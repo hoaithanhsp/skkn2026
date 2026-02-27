@@ -60,6 +60,7 @@ export interface UserInfo {
   // Yêu cầu khác
   specialRequirements: string; // Các yêu cầu đặc biệt: giới hạn trang, viết ngắn gọn, thêm bài toán...
   pageLimit: number | ''; // Số trang SKKN cần giới hạn (0 = không giới hạn)
+  solutionCount: 0 | 1 | 2 | 3; // Số lượng giải pháp: 0 = tự động (AI tự quyết), 1/2/3 = chính xác số đó
   includePracticalExamples: boolean; // Thêm nhiều bài toán thực tế, ví dụ minh họa
   includeStatistics: boolean; // Bổ sung bảng biểu, số liệu thống kê
   requirementsConfirmed: boolean; // Đã xác nhận các yêu cầu chưa
