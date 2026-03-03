@@ -137,9 +137,9 @@ const createChatSession = (model: string) => {
     model: model,
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
-      temperature: 0.7,
+      temperature: 0.85,
       topK: 64,
-      topP: 0.95,
+      topP: 0.92,
       maxOutputTokens: 65536,
       thinkingConfig: { thinkingBudget: 2048 },
       tools: [{ googleSearch: {} }]
@@ -186,9 +186,9 @@ export const sendMessageStream = async (message: string, onChunk: (text: string)
         model: model,
         config: {
           systemInstruction: SYSTEM_INSTRUCTION,
-          temperature: 0.7,
+          temperature: 0.85,
           topK: 64,
-          topP: 0.95,
+          topP: 0.92,
           maxOutputTokens: 65536,
           thinkingConfig: { thinkingBudget: 2048 },
           tools: [{ googleSearch: {} }]
