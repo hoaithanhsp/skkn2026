@@ -29,6 +29,16 @@ export const parseApiError = (error: any): string => {
     return 'INVALID_API_KEY';
   }
 
+  // Kiểm tra lỗi timeout
+  if (errorMessage.includes('Hết thời gian') || errorMessage.includes('timeout') || errorMessage.includes('TIMEOUT')) {
+    return 'TIMEOUT';
+  }
+
+  // Kiểm tra lỗi abort (người dùng hủy)
+  if (error?.name === 'AbortError' || errorMessage.includes('AbortError') || errorMessage.includes('hủy bỏ')) {
+    return 'ABORTED';
+  }
+
   // Kiểm tra lỗi kết nối
   if (errorMessage.includes('network') ||
     errorMessage.includes('fetch') ||
@@ -89,6 +99,29 @@ export const getFriendlyErrorMessage = (error: any): { type: string; title: stri
           '📶 Kiểm tra kết nối WiFi/Internet',
           '🔄 Thử làm mới trang (F5)',
           '🌍 Thử sử dụng mạng khác'
+        ]
+      };
+
+    case 'TIMEOUT':
+      return {
+        type: 'timeout',
+        title: '⏰ Hết thời gian chờ',
+        message: 'AI mất quá lâu để phản hồi (hơn 2 phút). Có thể do mạng chậm hoặc yêu cầu quá phức tạp.',
+        suggestions: [
+          '🔄 Thử lại - thường sẽ nhanh hơn ở lần sau',
+          '📶 Kiểm tra kết nối mạng',
+          '📝 Giảm độ dài tài liệu tham khảo nếu quá lớn'
+        ]
+      };
+
+    case 'ABORTED':
+      return {
+        type: 'aborted',
+        title: '🛑 Đã hủy bỏ',
+        message: 'Quá trình đã bị hủy bởi người dùng.',
+        suggestions: [
+          '🔄 Bấm "Viết tiếp" để tiếp tục từ chỗ đang dừng',
+          '📝 Kiểm tra lại nội dung đã tạo trước khi tiếp tục'
         ]
       };
 
@@ -164,10 +197,25 @@ const getOrderedModels = (): string[] => {
   return orderedModels;
 };
 
-export const sendMessageStream = async (message: string, onChunk: (text: string) => void) => {
+// Timeout mặc định cho mỗi request (120 giây - đủ dài cho SKKN generation)
+const DEFAULT_STREAM_TIMEOUT = 120_000;
+
+export const sendMessageStream = async (
+  message: string,
+  onChunk: (text: string) => void,
+  options?: { signal?: AbortSignal; timeoutMs?: number }
+) => {
   // Sử dụng API key từ localStorage (đã được khởi tạo qua initializeGeminiChat)
   if (!currentApiKey) {
     throw new Error("Không có API Key. Vui lòng nhập API key trong phần Cài đặt.");
+  }
+
+  const externalSignal = options?.signal;
+  const timeoutMs = options?.timeoutMs ?? DEFAULT_STREAM_TIMEOUT;
+
+  // Kiểm tra nếu đã bị hủy trước khi bắt đầu
+  if (externalSignal?.aborted) {
+    throw new DOMException("Đã hủy bỏ quá trình.", "AbortError");
   }
 
   let lastError: any = null;
@@ -177,6 +225,11 @@ export const sendMessageStream = async (message: string, onChunk: (text: string)
 
   // Thử lần lượt các model theo thứ tự fallback
   for (const model of modelsToTry) {
+    // Kiểm tra abort trước mỗi lần thử model
+    if (externalSignal?.aborted) {
+      throw new DOMException("Đã hủy bỏ quá trình.", "AbortError");
+    }
+
     try {
       console.log(`🤖 Đang thử model: ${model}`);
 
@@ -196,15 +249,52 @@ export const sendMessageStream = async (message: string, onChunk: (text: string)
         history: history
       });
 
+      // Tạo timeout promise
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error("⏰ Hết thời gian chờ phản hồi từ AI. Vui lòng thử lại."));
+        }, timeoutMs);
+      });
+
+      // Lắng nghe abort signal từ bên ngoài
+      const abortPromise = externalSignal
+        ? new Promise<never>((_, reject) => {
+          const onAbort = () => reject(new DOMException("Đã hủy bỏ quá trình.", "AbortError"));
+          if (externalSignal.aborted) { onAbort(); return; }
+          externalSignal.addEventListener('abort', onAbort, { once: true });
+        })
+        : new Promise<never>(() => { }); // Never resolves
+
       const responseStream = await chatSession.sendMessageStream({ message });
 
       let fullResponse = "";
-      for await (const chunk of responseStream) {
-        if (chunk.text) {
-          onChunk(chunk.text);
-          fullResponse += chunk.text;
+
+      // Stream với race giữa data, timeout và abort
+      const streamPromise = (async () => {
+        for await (const chunk of responseStream) {
+          // Kiểm tra abort giữa các chunk
+          if (externalSignal?.aborted) {
+            throw new DOMException("Đã hủy bỏ quá trình.", "AbortError");
+          }
+          if (chunk.text) {
+            onChunk(chunk.text);
+            fullResponse += chunk.text;
+            // Reset timeout mỗi khi nhận chunk (vì stream đang hoạt động)
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = setTimeout(() => {
+                // Timeout chỉ xảy ra khi không nhận được chunk mới
+              }, timeoutMs);
+            }
+          }
         }
-      }
+      })();
+
+      await Promise.race([streamPromise, timeoutPromise, abortPromise]);
+
+      // Clear timeout khi hoàn thành
+      if (timeoutId) clearTimeout(timeoutId);
 
       // Thành công - cập nhật history và return
       history.push({ role: 'user', parts: [{ text: message }] });
@@ -213,6 +303,12 @@ export const sendMessageStream = async (message: string, onChunk: (text: string)
       return;
 
     } catch (error: any) {
+      // Nếu là lỗi abort, throw ngay không fallback
+      if (error?.name === 'AbortError') {
+        console.log('🛑 Đã hủy bỏ quá trình bởi người dùng.');
+        throw error;
+      }
+
       console.error(`❌ Model ${model} thất bại:`, error.message || error);
       lastError = error;
 
