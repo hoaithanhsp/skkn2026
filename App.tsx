@@ -8,9 +8,22 @@ import { DocumentPreview } from './components/DocumentPreview';
 import { Button } from './components/Button';
 import { ApiKeyModal } from './components/ApiKeyModal';
 // SolutionReviewModal removed - mẫu mới không cần review từng giải pháp
-import { Download, ChevronRight, Wand2, FileText, CheckCircle, RefreshCw, Settings, AlertTriangle, Save, Trash2 } from 'lucide-react';
+import { Download, ChevronRight, Wand2, FileText, CheckCircle, RefreshCw, Settings, AlertTriangle, Save, Trash2, XCircle, Loader2 } from 'lucide-react';
 
 import { LockScreen } from './components/LockScreen';
+
+// Progress mapping: mỗi step tương ứng với % tiến trình
+const STEP_PROGRESS: Record<number, { percent: number; label: string }> = {
+  [GenerationStep.INPUT_FORM]: { percent: 0, label: 'Chuẩn bị' },
+  [GenerationStep.OUTLINE]: { percent: 10, label: 'Lập dàn ý' },
+  [GenerationStep.PART_I]: { percent: 20, label: 'Phần I - Thông tin chung' },
+  [GenerationStep.PART_II]: { percent: 35, label: 'Phần II - Giải pháp đã biết' },
+  [GenerationStep.PART_III_1]: { percent: 55, label: 'Phần III.1 - Nội dung giải pháp' },
+  [GenerationStep.PART_III_2]: { percent: 75, label: 'Phần III.2 - Tính mới, sáng tạo' },
+  [GenerationStep.PART_III_3]: { percent: 85, label: 'Phần III.3 - Phạm vi ảnh hưởng' },
+  [GenerationStep.PART_III_4]: { percent: 92, label: 'Phần III.4 - Hiệu quả, lợi ích' },
+  [GenerationStep.COMPLETED]: { percent: 100, label: 'Hoàn thành!' },
+};
 
 // Helper: Truncate text dài cho AI prompt - giữ phần đầu (nội dung chính) và thông báo lược bớt
 const MAX_REF_DOCS_FOR_PROMPT = 80000; // ~80K ký tự tối đa cho tài liệu tham khảo trong prompt
@@ -216,6 +229,30 @@ const App: React.FC = () => {
   // Phụ lục riêng biệt
   const [appendixDocument, setAppendixDocument] = useState('');
   const [isAppendixLoading, setIsAppendixLoading] = useState(false);
+
+  // ═══════════════════════════════════════════════════════════
+  // ABORT CONTROLLER: Cho phép hủy quá trình generation
+  // ═══════════════════════════════════════════════════════════
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Tạo AbortController mới cho mỗi lần generation
+  const createAbortController = useCallback(() => {
+    // Hủy controller cũ nếu còn
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    return abortControllerRef.current;
+  }, []);
+
+  // Hàm hủy generation
+  const cancelGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setState(prev => ({ ...prev, isStreaming: false, error: '🛑 Đã hủy quá trình. Bạn có thể bấm "Viết tiếp" để tiếp tục.' }));
+  }, []);
 
   // ═══════════════════════════════════════════════════════════
   // SESSION PERSISTENCE: Tự động lưu phiên vào localStorage
@@ -525,6 +562,7 @@ ${structureText}
     try {
       setState(prev => ({ ...prev, step: GenerationStep.OUTLINE, isStreaming: true, error: null }));
 
+      const controller = createAbortController();
       initializeGeminiChat(apiKey, selectedModel);
 
       const isHigherEd = HIGHER_ED_LEVELS.includes(userInfo.level);
@@ -645,7 +683,7 @@ Kết thúc phần dàn ý, hiển thị hộp thoại:
           pendingChunks_sg = '';
           setState(prev => ({ ...prev, fullDocument: text }));
         }
-      });
+      }, { signal: controller.signal });
       // Flush cuối
       setState(prev => ({ ...prev, fullDocument: generatedText }));
 
@@ -674,6 +712,7 @@ Kết thúc phần dàn ý, hiển thị hộp thoại:
     if (!outlineFeedback.trim()) return;
 
     try {
+      const controller = createAbortController();
       setState(prev => ({ ...prev, isStreaming: true, error: null, fullDocument: '' }));
 
       const feedbackMessage = `
@@ -705,7 +744,7 @@ Kết thúc phần dàn ý, hiển thị hộp thoại:
           pendingChunks_ro = '';
           setState(prev => ({ ...prev, fullDocument: text }));
         }
-      });
+      }, { signal: controller.signal });
       // Flush cuối
       setState(prev => ({ ...prev, fullDocument: generatedText }));
 
@@ -1003,6 +1042,7 @@ Chúc mừng bạn đã hoàn thành bản mô tả sáng kiến!`,
 
     if (!currentStepPrompt) return;
 
+    const controller = createAbortController();
     setState(prev => ({ ...prev, isStreaming: true, error: null, step: nextStepEnum }));
 
     try {
@@ -1033,7 +1073,7 @@ Chúc mừng bạn đã hoàn thành bản mô tả sáng kiến!`,
             flushPending();
           }
         }
-      });
+      }, { signal: controller.signal });
 
       // Flush phần còn lại sau khi stream kết thúc
       flushPending();
@@ -1067,7 +1107,8 @@ Chúc mừng bạn đã hoàn thành bản mô tả sáng kiến!`,
               pendingCont = '';
               setState(prev => ({ ...prev, fullDocument: prev.fullDocument + toFlush }));
             }
-          }
+          },
+          { signal: controller.signal }
         );
         // Flush cuối
         if (pendingCont) {
@@ -1545,6 +1586,42 @@ Format: Markdown chuẩn, bảng biểu dùng | | |
           </div>
         ) : (
           <div className="flex-1 flex flex-col min-h-0 relative">
+            {/* Progress Bar + Cancel Button */}
+            {state.isStreaming && (
+              <div className="mb-3 bg-white/90 backdrop-blur-sm rounded-xl border border-sky-200 p-4 shadow-sm animate-in fade-in">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Loader2 size={16} className="text-sky-600 animate-spin" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {STEP_PROGRESS[state.step]?.label || 'Đang xử lý...'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-bold text-sky-600">
+                      {STEP_PROGRESS[state.step]?.percent || 0}%
+                    </span>
+                    <button
+                      onClick={cancelGeneration}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-medium transition-colors border border-red-200"
+                      title="Hủy quá trình"
+                    >
+                      <XCircle size={14} />
+                      Hủy
+                    </button>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-sky-400 to-sky-600 h-full transition-all duration-700 ease-out"
+                    style={{ width: `${STEP_PROGRESS[state.step]?.percent || 0}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1.5 text-center">
+                  ⏱️ Quá trình có thể mất vài phút. Vui lòng không đóng tab.
+                </p>
+              </div>
+            )}
+
             <DocumentPreview
               content={state.fullDocument}
               onUpdate={handleDocumentUpdate}
